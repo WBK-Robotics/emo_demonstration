@@ -1,0 +1,6 @@
+
+<launch>
+    <node pkg="emo_demonstration" exec="trajectory_publisher"/>
+</launch>
+
+

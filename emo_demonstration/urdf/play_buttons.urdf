@@ -1,0 +1,102 @@
+<?xml version="1.0" ?>
+<robot name="buttons">
+  <!-- Define the root link -->
+  <link name="root">
+    <visual>
+      <geometry>
+        <box size="0.5 0.17 0.1"/>
+      </geometry>
+      <material name="grey_a">
+        <color rgba="0.5 0.5 0.5 1"/>
+      </material>
+    </visual>
+  </link>
+
+  <!-- Define the buttons -->
+  <link name="record_button">
+    <visual>
+			<geometry>
+				<mesh filename="mesh/visual/record_button.dae" scale="0.0007 0.0007 0.0007"/>
+			</geometry>
+      <material name="grey">
+        <color rgba="0.5 0.5 0.5 1"/>
+      </material>
+    </visual>
+    <collision>
+      <geometry>
+        <mesh filename="mesh/collision/record_button.dae" scale="0.0007 0.0007 0.0007"/>
+      </geometry>
+    </collision>
+    
+  </link>
+  <link name="play_button">
+    <visual>
+      <geometry>
+        <mesh filename="mesh/visual/play_button.dae" scale="0.0007 0.0007 0.0007"/>
+      </geometry>
+      <material name="grey">
+        <color rgba="0.5 0.5 0.5 1"/>
+      </material>
+    </visual>
+    <collision>
+      <geometry>
+        <mesh filename="mesh/collision/play_button.dae" scale="0.0007 0.0007 0.0007"/>
+      </geometry>
+    </collision>
+    
+  </link>
+  <link name="delete_button">
+    <visual>
+      <geometry>
+        <mesh filename="mesh/visual/delete_button.dae" scale="0.0007 0.0007 0.0007"/>
+      </geometry>
+      <material name="grey">
+        <color rgba="0.5 0.5 0.5 1"/>
+      </material>
+    </visual>
+    <collision>
+      <geometry>
+        <mesh filename="mesh/collision/delete_button.dae" scale="0.0007 0.0007 0.0007"/>
+      </geometry>
+    </collision>
+    
+  </link>
+  <link name="send_button">
+    <visual>
+      <geometry>
+        <mesh filename="mesh/visual/send_button.dae" scale="0.0007 0.0007 0.0007"/>
+      </geometry>
+      <material name="grey">
+        <color rgba="0.5 0.5 0.5 1"/>
+      </material>
+    </visual>
+    <collision>
+      <geometry>
+        <mesh filename="mesh/collision/send_button.dae"  scale="0.0007 0.0007 0.0007"/>
+      </geometry>
+    </collision>
+   
+  </link>
+
+  <!-- Joints to connect the root link and the buttons -->
+  <joint name="record_to_root" type="fixed">
+    <parent link="root"/>
+    <child link="record_button"/>
+    <origin xyz="-0.15 0 0.07" rpy="0 0 1.507"/>
+  </joint>
+    <joint name="play_to_root" type="fixed">
+        <parent link="root"/>
+        <child link="play_button"/>
+        <origin xyz="-0.05 0 0.07" rpy="0 0 1.507"/>
+    </joint>
+    <joint name="delete_to_root" type="fixed">
+        <parent link="root"/>
+        <child link="delete_button"/>
+         <origin xyz="0.05 0 0.07" rpy="0 0 1.507"/>
+    </joint>
+    <joint name="send_to_root" type="fixed">
+        <parent link="root"/>
+        <child link="send_button"/>^
+        <origin xyz="0.15 0 0.07" rpy="0 0 1.507"/>
+    </joint>
+</robot>

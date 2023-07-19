@@ -1,0 +1,8 @@
+<launch>
+    <include file="$(find-pkg-share ur_robot_driver)/launch/ur_control.launch.py">
+        <arg name="ur_type" value="ur5e"/>
+        <arg name="robot_ip" value="192.168.1.102 "/>
+        <arg name="launch_rviz" value="false"/>
+        <arg name="use_fake_hardware" value="false"/>
+    </include>
+</launch>
