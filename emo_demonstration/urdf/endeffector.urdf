@@ -1,0 +1,93 @@
+<?xml version="1.0" ?>
+<robot name="endeffector">
+
+<link name="base">
+    <visual>
+        <geometry>
+				<mesh filename="endeffector_mesh/Gesamtaufbau.stl" scale="0.001 0.001 0.001"/>
+        </geometry>
+</visual>
+</link>
+
+<joint name="base_joint" type="fixed">
+    <parent link="base"/>
+    <child link="screwdriver"/>
+    <origin rpy="0 0 0" xyz="0 0 0"/>
+</joint>
+
+<link name="screwdriver">
+    <visual>
+        <geometry>
+                <mesh filename="endeffector_mesh/Schrauber.stl" scale="0.001 0.001 0.001"/>
+        </geometry>
+</visual>
+</link>
+<joint name="screwdriver_joint" type="fixed">
+    <parent link="base"/>
+    <child link="screw_tip"/>
+    <origin rpy="0 0 0" xyz="0.089 -0.104 0.032"/>
+</joint>
+
+<link name="screw_tip">
+<visual>
+    <geometry>
+     <sphere radius="0.001"/>
+    </geometry>
+</visual>
+</link>
+
+<joint name="left_jaw" type ="prismatic">
+    <parent link="base"/>
+    <child link="left_jaw_link"/>
+    <axis xyz="0 1 0"/>
+    <limit effort="1000" lower="0" upper="0.01" velocity="0.01"/>
+</joint>
+
+<link name="left_jaw_link">
+    <visual>
+        <geometry>
+            <mesh filename="endeffector_mesh/Backe1.stl" scale="0.001 0.001 0.001"/>
+        </geometry>
+    </visual>
+    <collision>
+        <geometry>
+            <mesh filename="endeffector_mesh/Backe1.stl" scale="0.001 0.001 0.001"/>
+        </geometry>
+    </collision>
+</link>
+
+<joint name="right_jaw" type ="prismatic">
+    <parent link="base"/>
+    <child link="right_jaw_link"/>
+    <axis xyz="0 -1 0"/>
+    <limit effort="1000" lower="0" upper="0.01" velocity="0.01"/>
+</joint>
+
+<link name="right_jaw_link">
+    <visual>
+        <geometry>
+            <mesh filename="endeffector_mesh/Backe2.stl" scale="0.001 0.001 0.001"/>
+        </geometry>
+    </visual>
+    <collision>
+        <geometry>
+            <mesh filename="endeffector_mesh/Backe2.stl" scale="0.001 0.001 0.001"/>
+        </geometry>
+    </collision>
+</link>
+
+<joint name="gripper_center" type="fixed">
+    <parent link="base"/>
+    <child link="gripper_center_link"/>
+    <origin rpy="0 0 0" xyz="0.0 0.0 0.185"/>
+</joint>
+
+<link name="gripper_center_link">
+<visual>
+    <geometry>
+     <sphere radius="0.0001"/>
+    </geometry>
+</visual>
+</link>
+
+</robot>
