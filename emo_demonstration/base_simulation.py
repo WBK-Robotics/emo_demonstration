@@ -8,7 +8,8 @@ import pybullet_industrial as pi
 def setup_base_sim(mode = "gui"):
     file_directory = os.path.dirname(os.path.abspath(__file__))
     sdmbot_urdf_file = os.path.join(file_directory, 'urdf', 'sdmbot.urdf')
-    endeffector_urdf_file = os.path.join(file_directory, 'urdf', 'endeffector.urdf')
+    main_endeffector_urdf_file = os.path.join(file_directory, 'urdf', 'endeffector.urdf')
+    screw_drifer_addon_urdf_file = os.path.join(file_directory, 'urdf', 'screw_driver_addon.urdf')
 
     if mode == "gui":
         physics_client = p.connect(p.GUI, options='--background_color_red=1 ' +
@@ -32,8 +33,12 @@ def setup_base_sim(mode = "gui"):
   
 
     robot = pi.RobotBase(sdmbot_urdf_file, [0, 0, 0], start_orientation)
-    endeffector = pi.Gripper(endeffector_urdf_file, [0, 0, 0], start_orientation)
-    endeffector.couple(robot,endeffector_name='tool0')
+    gripper = pi.Gripper(main_endeffector_urdf_file, [0, 0, 0], start_orientation)
+    gripper.couple(robot,endeffector_name='tool0')
+
+    screwdriver = pi.SuctionGripper(screw_drifer_addon_urdf_file, [0, 0, 0], start_orientation)
+    screwdriver.couple(robot,endeffector_name='tool0')
+
 
     joint_state = {'shoulder_lift_joint': -1.3061111730388184,
                    'elbow_joint': -0.43253040313720703,
@@ -45,23 +50,23 @@ def setup_base_sim(mode = "gui"):
     robot.set_joint_position(joint_state)
 
 
-    return robot, endeffector
+    return robot, gripper, screwdriver
 
 if __name__ == "__main__":
     import numpy as np
 
-    robot, endeffector = setup_base_sim()
+    robot, gripper, screwdriver = setup_base_sim()
     for _ in range(100):
         p.stepSimulation()
 
     position = np.array([0, 0, 0.63])
     while True:
         p.stepSimulation()
-        endeffector.actuate(1)
+        gripper.actuate(1)
         time.sleep(1)
         for _ in range(50):
             p.stepSimulation()
-        endeffector.actuate(0)
+        gripper.actuate(0)
         time.sleep(1)
         for _ in range(50):
             p.stepSimulation()

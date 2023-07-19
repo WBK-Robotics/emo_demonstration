@@ -16,11 +16,6 @@
 </joint>
 
 <link name="screwdriver">
-    <visual>
-        <geometry>
-                <mesh filename="endeffector_mesh/Schrauber.stl" scale="0.001 0.001 0.001"/>
-        </geometry>
-</visual>
 </link>
 <joint name="screwdriver_joint" type="fixed">
     <parent link="base"/>
