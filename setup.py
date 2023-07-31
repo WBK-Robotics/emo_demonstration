@@ -52,7 +52,8 @@ setup(
     entry_points={
         'console_scripts': [
             'trajectory_publisher = emo_demonstration.ur5_trajectory_publisher:main',
-            'board_calibration = emo_demonstration.board_calibration:main'
+            'board_calibration = emo_demonstration.board_calibration:main',
+            'test_io_service_client = emo_demonstration.io_service_client:main',
         ],
     },
 )
