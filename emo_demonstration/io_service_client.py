@@ -7,7 +7,7 @@ class IOServiceClient(Node):
 
     def __init__(self):
         super().__init__('io_service_client')
-        self.client = self.create_client(SetIO, 'set_io')
+        self.client = self.create_client(SetIO, 'io_and_status_controller/set_io')
         while not self.client.wait_for_service(timeout_sec=1.0):
             self.get_logger().info('service not available, waiting again...')
         self.req = SetIO.Request()
@@ -18,6 +18,19 @@ class IOServiceClient(Node):
         self.req.state = value
         self.future = self.client.call_async(self.req)
         self.future.add_done_callback(self.callback)
+
+    def open_gripper(self):
+        self.set_digital_out(17,0.0)
+        sleep(0.025)
+        self.set_digital_out(16,1.0)
+
+
+    def close_gripper(self):
+        self.set_digital_out(16,0.0)
+        sleep(0.025)
+        self.set_digital_out(17,1.0)
+
+
 
     def callback(self, future):
         try:
@@ -35,10 +48,8 @@ def main(args=None):
     rclpy.init()
     node = IOServiceClient()
 
-    # loop through all digital outputs:
-    for i in range(0, 8):
-        node.set_digital_out(i, True)
+    while True:
+        node.open_gripper()
         sleep(1)
-        node.set_digital_out(i, False)
+        node.close_gripper()
         sleep(1)
-     
