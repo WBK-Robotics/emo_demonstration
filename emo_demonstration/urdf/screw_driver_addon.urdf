@@ -6,7 +6,7 @@
         <geometry>
 				<mesh filename="endeffector_mesh/Gesamtaufbau.stl" scale="0.001 0.001 0.001"/>
         </geometry>
-</visual>
+    </visual>
 </link>
 
 <joint name="base_joint" type="fixed">
@@ -20,7 +20,12 @@
         <geometry>
                 <mesh filename="endeffector_mesh/Schrauber.stl" scale="0.001 0.001 0.001"/>
         </geometry>
-</visual>
+    </visual>
+    <collision>
+        <geometry>
+				<mesh filename="endeffector_mesh/Schrauber.stl" scale="0.001 0.001 0.001"/>
+        </geometry>
+    </collision>
 </link>
 <joint name="screwdriver_joint" type="fixed">
     <parent link="base"/>
@@ -31,8 +36,11 @@
 <link name="screw_tip">
 <visual>
     <geometry>
-     <sphere radius="0.001"/>
+        <sphere radius="0.0005"/>
     </geometry>
+    <material name="red">
+        <color rgba="1.0 0.0 0.0 1.0"/>
+    </material>
 </visual>
 </link>
 
