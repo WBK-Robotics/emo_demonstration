@@ -36,7 +36,7 @@ def setup_base_sim(mode = "gui"):
   
 
     robot = pi.RobotBase(sdmbot_urdf_file, [0, 0, 0], start_orientation)
-    gripper = pi.Gripper(main_endeffector_urdf_file, [0, 0, 0], start_orientation)
+    gripper = pi.Gripper(main_endeffector_urdf_file, [0, 0, 0], start_orientation, tcp_frame="gripper_center_link")
     gripper.couple(robot,endeffector_name='tool0')
 
     screwdriver = pi.SuctionGripper(screw_drifer_addon_urdf_file, [0, 0, 0], start_orientation, tcp_frame="screw_tip")
@@ -46,7 +46,7 @@ def setup_base_sim(mode = "gui"):
     joint_state = {'shoulder_lift_joint': -np.pi/2,
                    'elbow_joint': -np.pi/2,
                    'wrist_1_joint': -np.pi,
-                   'wrist_2_joint': -np.pi/2,
+                   'wrist_2_joint': 0,
                    'wrist_3_joint': 0,
                    'shoulder_pan_joint': np.pi/2}
     for _ in range(200):
