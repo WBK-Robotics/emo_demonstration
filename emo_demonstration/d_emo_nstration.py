@@ -305,7 +305,7 @@ class emo_controler():
         print(us_target_pos)
         self.move_linear(screwdriver, us_target_pos, 0.02, 10)
         if self.synchronization:
-            constraint = self.force_control_screw(screwdriver, screw_Pid, constraint, 35.0, 0.25, 13, offset=0.00045)
+            constraint = self.force_control_screw(screwdriver, screw_Pid, constraint, 37.0, 0.25, 13, offset=0.00045)
         self.move_linear(screwdriver, us_pos_up, 0.05, 20)
         return constraint
     
@@ -329,7 +329,7 @@ class emo_controler():
         us_target_pos = copy.deepcopy(us_pos_up)
         us_target_pos[2] = us_target_pos[2] - get_min_dist(gripper.urdf, object_Pid)+offset[2]
         
-        self.move_linear(gripper, us_target_pos, 0.02, 10)
+        self.move_linear(gripper, us_target_pos, 0.02, 20)
 
         pos_g, orn_g = gripper.get_tool_pose()
         inv_pos, inv_orn = p.invertTransform(pos_g, orn_g)
@@ -358,7 +358,7 @@ class emo_controler():
             p.removeConstraint(constraint)
         for _ in range(50):
             p.stepSimulation()
-        self.move_linear(gripper, us_pos_up2, 0.01, 20) 
+        self.move_linear(gripper, us_pos_up2, 0.01, 15) 
         droping_move_up = copy.deepcopy(droping_move)    
         droping_move_up[2] = us_pos_up2[2]
         self.move_linear(gripper, droping_move_up, 0.1, 40)
@@ -444,7 +444,7 @@ def main():
     #constraint_ids[i-1] = controler.unscrew(screwdriver, motor[i], constraint_ids[i-1], -0.002)
     controler.switch_to_gripper()
     for i in range(3,7):
-        controler.grip(gripper, motor[i], [0.10, 0.105, 0.8], constraint_ids[i-1], [0,0.00,-0.01],0.125)
+        controler.grip(gripper, motor[i], [0.10, 0.105, 0.8], constraint_ids[i-1], [0,-0.001,-0.013],0.150)
     #controler.grip(gripper, motor[i], [[0.10, 0.105, 0.8]], constraint_ids[i-1], [0,0.00,-0.01],0.125)
     i=1
     controler.grip(gripper, motor[i], [-0.25, 0.270, 0.58], constraint_ids[i-1], [0,-0.0345,-0.008], 0.06, True)
