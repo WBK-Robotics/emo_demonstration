@@ -3,7 +3,7 @@ import time
 import numpy as np
 import pybullet as p
 import pybullet_industrial as pi
-
+from depth_camera import RGBDCamera
 
 
 def setup_base_sim(mode = "gui"):
@@ -11,6 +11,7 @@ def setup_base_sim(mode = "gui"):
     sdmbot_urdf_file = os.path.join(file_directory, 'urdf', 'sdmbot.urdf')
     main_endeffector_urdf_file = os.path.join(file_directory, 'urdf', 'endeffector.urdf')
     screw_drifer_addon_urdf_file = os.path.join(file_directory, 'urdf', 'screw_driver_addon.urdf')
+    camera_addon_urdf_file = os.path.join(file_directory, 'urdf', 'depth_camera.urdf')
 
     if mode == "gui":
         physics_client = p.connect(p.GUI, options='--background_color_red=0.5 ' +
@@ -42,6 +43,12 @@ def setup_base_sim(mode = "gui"):
     screwdriver = pi.SuctionGripper(screw_drifer_addon_urdf_file, [0, 0, 0], start_orientation, tcp_frame="screw_tip")
     screwdriver.couple(robot,endeffector_name='tool0')
 
+    camera_parameters = {'width': int(1920/32), 'height': int(1080/32), 'fov': 30,
+                         'aspect ratio': 16/9, 'near plane distance': 0.01, 'far plane distance': 100}
+    camera = RGBDCamera(camera_addon_urdf_file, [0, 0, 0], start_orientation,
+                        camera_parameters=camera_parameters, camera_frame="camera")
+    camera.couple(robot,endeffector_name='tool0')
+
 
     joint_state = {'shoulder_lift_joint': -np.pi/2,
                    'elbow_joint': -np.pi/2,
@@ -53,14 +60,16 @@ def setup_base_sim(mode = "gui"):
         robot.set_joint_position(joint_state)
         p.stepSimulation()
 
-    return robot, gripper, screwdriver
+    return robot, gripper, screwdriver, camera
 
 if __name__ == "__main__":
     import numpy as np
 
-    robot, gripper, screwdriver = setup_base_sim()
+    robot, gripper, screwdriver, camera = setup_base_sim()
     for _ in range(100):
         p.stepSimulation()
+
+
 
     position = np.array([0, 0, 0.63])
     while True:
