@@ -96,7 +96,6 @@ if __name__ == "__main__":
 
     file_directory = os.path.dirname(os.path.abspath(__file__))
     motor_path = os.path.join(file_directory,'urdf', 'DM_EMO_urdf')
-    plate_path = os.path.join(file_directory,'urdf', 'plate.urdf')
 
     robot, gripper, screwdriver, camera = setup_base_sim()
     for _ in range(100):
@@ -104,10 +103,10 @@ if __name__ == "__main__":
 
     switch_to_camera(robot)
 
-    spawn_point = np.array([-0.072, 0.105, 0.555])
-    spawn_orient = p.getQuaternionFromEuler([0, 0, np.pi/180 * 1.0])
-    p.loadURDF(plate_path, spawn_point - np.array([0, 0.0, 0.005]), spawn_orient, useFixedBase=True)
+    spawn_point = np.array([-0.0015, -0.003, 0.005])
+    spawn_orient = p.getQuaternionFromEuler([0, 0, np.pi/180 * 0.0])
     motor, constraint_ids = load_assembly(motor_path, spawn_point, spawn_orient, 0.001)
+
 
     initial_position = spawn_point + np.array([-0.0, 0.0, 0.3])  # np.array([0, 0.2, 1.0])
     initial_orientation = p.getQuaternionFromEuler([-np.pi, 0, 0])
