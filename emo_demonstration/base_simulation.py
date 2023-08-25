@@ -3,13 +3,13 @@ import time
 import numpy as np
 import pybullet as p
 import pybullet_industrial as pi
-from depth_camera import RGBDCamera
+from emo_demonstration.depth_camera import RGBDCamera
 
 
 def setup_base_sim(mode = "gui"):
     file_directory = os.path.dirname(os.path.abspath(__file__))
-    sdmbot_urdf_file = os.path.join(file_directory, 'urdf', 'sdmbot.urdf')
-    main_endeffector_urdf_file = os.path.join(file_directory, 'urdf', 'endeffector.urdf')
+    sdmbot_urdf_file = os.path.join(file_directory, 'urdf', 'sdmbot copy.urdf')
+    main_endeffector_urdf_file = os.path.join(file_directory, 'urdf', 'endeffectorV2.urdf')
     screw_drifer_addon_urdf_file = os.path.join(file_directory, 'urdf', 'screw_driver_addon.urdf')
     camera_addon_urdf_file = os.path.join(file_directory, 'urdf', 'depth_camera.urdf')
 
@@ -18,7 +18,7 @@ def setup_base_sim(mode = "gui"):
                                                 '--background_color_green=0.5 ' +
                                                 '--background_color_blue=0.5')
         p.configureDebugVisualizer(p.COV_ENABLE_GUI, 0)
-        p.resetDebugVisualizerCamera(cameraDistance=1.5, cameraYaw=-90, cameraPitch=-25, cameraTargetPosition=[0,0,0.5])
+        p.resetDebugVisualizerCamera(cameraDistance=1.5, cameraYaw=-90, cameraPitch=-25, cameraTargetPosition=[0,0,0])
     elif mode == "direct":
         physics_client = p.connect(p.DIRECT)
     elif mode == "shared_memory":

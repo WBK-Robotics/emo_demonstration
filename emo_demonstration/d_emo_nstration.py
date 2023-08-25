@@ -373,6 +373,7 @@ class emo_controler():
         for _ in range(50):
             p.stepSimulation()  
         self.move_linear(gripper, droping_move_up, 0.1, 40)
+        return pos_g, orn_g
      
     
     def switch_to_gripper(self):
@@ -421,49 +422,61 @@ class emo_controler():
 def main():
     file_directory = os.path.dirname(os.path.abspath(__file__))
     motor_path = os.path.join(file_directory,'urdf', 'DM_EMO_urdf')    
-    plate_path = os.path.join(file_directory,'urdf', 'plate.urdf')    
-    robot, gripper, screwdriver = setup_base_sim()
+    robot, gripper, screwdriver, camera = setup_base_sim()
     controler = emo_controler(robot, synchronization=True)  
     controler.synchronize_real_pose(3.0)
     controler.gripper_node.open_gripper()
     gripper.actuate(1.0)
 
-     #controler.switch_to_gripper()
+  
+    #controler.switch_to_gripper()
     #controler.switch_to_screwdriver()
     
 
-    spawn_point = np.array([-0.072, 0.105, 0.555])
-    spawn_orient = p.getQuaternionFromEuler([0, 0, np.pi/180 * 1.0])
-    p.loadURDF(plate_path, spawn_point - np.array([0, 0.0, 0.005]), spawn_orient, useFixedBase=True)
+    spawn_point = np.array([-0.0015, -0.003, 0.005])
+    spawn_orient = p.getQuaternionFromEuler([0, 0, np.pi/180 * 0.0])
     motor, constraint_ids = load_assembly(motor_path, spawn_point, spawn_orient, 0.001)
 
-
-    #i=7
-    for i in range(3,7):
+    ###############################################EMO
+    """i=7
+    for i in range(3,i):
         constraint_ids[i-1] = controler.unscrew(screwdriver, motor[i], constraint_ids[i-1], -0.002)
     #constraint_ids[i-1] = controler.unscrew(screwdriver, motor[i], constraint_ids[i-1], -0.002)
     controler.switch_to_gripper()
-    for i in range(3,7):
-        controler.grip(gripper, motor[i], [0.10, 0.105, 0.8], constraint_ids[i-1], [0,-0.001,-0.013],0.150)
+    for i in range(3,i):
+        controler.grip(gripper, motor[i], [0.0, -0.3, 0.12], constraint_ids[i-1], [0,-0.00,-0.013],0.150)"""
     #controler.grip(gripper, motor[i], [[0.10, 0.105, 0.8]], constraint_ids[i-1], [0,0.00,-0.01],0.125)
-    i=1
-    controler.grip(gripper, motor[i], [-0.25, 0.270, 0.58], constraint_ids[i-1], [0,-0.0345,-0.008], 0.06, True)
+    original_pos = {}
+    controler.switch_to_gripper()
+    """i=1
+    original_pos[i], _ = controler.grip(gripper, motor[i], [-0.2, 0.075, 0.01], constraint_ids[i-1], [0, -0.0565,-0.02], 0.06, False)
     i=2
-    controler.grip(gripper, motor[i], [-0.25, 0.170, 0.69], constraint_ids[i-1], [0,-0.0105,-0.02], 0.19, False)
+    original_pos[i], _ = controler.grip(gripper, motor[i], [-0.2, 0.0, 0.101], constraint_ids[i-1], [0, -0.012,-0.025], 0.19, False)"""
     i=7
-    controler.grip(gripper, motor[i] ,[-0.25, 0.00, 0.58], constraint_ids[i-1], [0,-0.0432,-0.05], 0.1, False)
+    original_pos[i], _ = controler.grip(gripper, motor[i] ,[-0.2, -0.150, 0.057], constraint_ids[i-1], [0, -0.042,-0.03], 0.1, False)
+
+    i=7
+    original_pos[i], _ = controler.grip(gripper, motor[i] ,original_pos[i], constraint_ids[i-1], [0, -0.042,-0.03], 0.1, False)
+
+    #####################################################EMO
+    """initial_position = spawn_point + np.array([-0.0, 0.0, 0.2]) #np.array([0, 0.2, 1.0])
+    initial_orientation = p.getQuaternionFromEuler([np.pi/2,0,-np.pi/2])
+    for _ in range(100):
+        screwdriver.set_tool_pose(initial_position, initial_orientation)
+        p.stepSimulation()
+        #time.sleep(0.01)
+    controler.synchronize_real_pose(2.0)
+
+    controler.calibrate_with_screw(motor[3], screwdriver, 0.002, 5)
+    controler.calibrate_with_screw(motor[4], screwdriver, 0.002, 5)
+    controler.calibrate_with_screw(motor[5], screwdriver, 0.002, 5)
+    controler.calibrate_with_screw(motor[6], screwdriver, 0.002, 5)"""
 
     while True:
         p.stepSimulation()
         time.sleep(0.1)
 
-    """initial_position = spawn_point + np.array([-0.0, 0.0, 0.15]) #np.array([0, 0.2, 1.0])
-    initial_orientation = p.getQuaternionFromEuler([np.pi/2,0,-np.pi/2])
-    for _ in range(100):
-        screwdriver.set_tool_pose(initial_position, initial_orientation)
-        p.stepSimulation()
-        time.sleep(0.01)
-    controler.synchronize_real_pose(2.0)"""
+
 
     #controler.calibrate_with_screw(motor[3], screwdriver, 0.0, 5)
     #time.sleep(3600)
