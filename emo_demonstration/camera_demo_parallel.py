@@ -1,3 +1,10 @@
+# -*- coding: utf-8 -*-
+"""
+Created on Wed Aug 30 22:03:55 2023
+
+@author: Jakob
+"""
+
 import os
 import time
 import numpy as np
@@ -5,6 +12,7 @@ import pybullet as p
 import pybullet_industrial as pi
 import matplotlib.pyplot as plt
 import time
+from multiprocessing import Process
 
 from base_simulation import setup_base_sim
 
@@ -12,6 +20,7 @@ from base_simulation import setup_base_sim
 # Global Parameters
 
 cutoff_depth : float = 1.0 # [0.0, 1.0]
+hold_time_plot : int = 10 # time plot is beeing held open for in sec
 
 def main():
 
@@ -45,12 +54,12 @@ def main():
     orientation.append(p.getQuaternionFromEuler([np.pi*(3/4), 0, np.pi*(1/4)]))
     
     # Capture PTcloud with camera end effector
-    points = capture_body(pose, orientation, camera, cutoff_depth)
+    points = capture_body(pose, orientation, camera, cutoff_depth, dict_assembly, hold_time_plot)
     
     # Highlight specified part in PTcloud
-    visualize_pt_cloud(points, dict_assembly, 'Highlighted Parts', ['S1', 'S2', 'S3', 'S4'])
+    visualize_pt_cloud(points, dict_assembly, 'Highlighted Parts', hold_time_plot, ['S1', 'S2', 'S3', 'S4'])
     
-def capture_body(pose, orientation, camera, cutoff_depth):
+def capture_body(pose, orientation, camera, cutoff_depth, dict_assembly, hold_time_plot):
     
     for i in range(len(pose)):
         
@@ -70,10 +79,14 @@ def capture_body(pose, orientation, camera, cutoff_depth):
         else:
                 
             points_combined= np.concatenate([points_combined, np.array(points)])
-    
+        
+        multi_p = Process(target=visualize_pt_cloud, args=(points_combined, dict_assembly, 'test', hold_time_plot,))
+        multi_p.start()
+        multi_p.join()
+        
     return points_combined
 
-def visualize_pt_cloud(points, dict_assembly, title, parts='NaN'):
+def visualize_pt_cloud(points, dict_assembly, title, hold_time_plot, parts='NaN'):
     
 
     if parts == 'NaN':
@@ -94,6 +107,7 @@ def visualize_pt_cloud(points, dict_assembly, title, parts='NaN'):
         
         # Show the plot
         plt.show(block=False)
+        plt.pause(hold_time_plot)
         
     else:
         
