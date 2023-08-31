@@ -11,7 +11,6 @@ import numpy as np
 import pybullet as p
 import pybullet_industrial as pi
 import matplotlib.pyplot as plt
-import time
 from multiprocessing import Process
 
 from base_simulation import setup_base_sim
@@ -80,25 +79,28 @@ def capture_body(pose, orientation, camera, cutoff_depth, dict_assembly, hold_ti
                 
             points_combined= np.concatenate([points_combined, np.array(points)])
         
-        multi_p = Process(target=visualize_pt_cloud, args=(points_combined, dict_assembly, 'test', hold_time_plot,))
+        title = 'Pose ' + str(i+1)
+        multi_p = Process(target=visualize_pt_cloud, args=(points_combined, dict_assembly, title, hold_time_plot,))
         multi_p.start()
         multi_p.join()
         
     return points_combined
 
-def visualize_pt_cloud(points, dict_assembly, title, hold_time_plot, parts='NaN'):
+def visualize_pt_cloud(points, dict_assembly, title, hold_time_plot, parts='NaN', markersize=2):
     
+    mngr = plt.get_current_fig_manager()
+    mngr.window.setGeometry(50,100,640, 545)
 
     if parts == 'NaN':
         
-        fig = plt.figure()
+        fig = plt.figure(figsize=(10, 10))
         fig.suptitle(title)
         
         # Add 3d axes
         ax = fig.add_subplot(111, projection='3d')
         
         # Scatter plot
-        ax.scatter(points[:, 0], points[:, 1], points[:, 2])
+        ax.scatter(points[:, 0], points[:, 1], points[:, 2], s=markersize)
         
         # Setting the labels
         ax.set_xlabel('X Label')
@@ -113,9 +115,10 @@ def visualize_pt_cloud(points, dict_assembly, title, hold_time_plot, parts='NaN'
         
         ids_unsorted = points[:,3]
         ids = np.unique(ids_unsorted)
-        fig = plt.figure()
+        fig = plt.figure(figsize=(10, 10))
         fig.suptitle(title)
         ax = fig.add_subplot(111, projection='3d')
+        ax.view_init(elev=10, azim=60, roll=0)
         
         part_ids = []
         for part_name in parts:
@@ -128,13 +131,16 @@ def visualize_pt_cloud(points, dict_assembly, title, hold_time_plot, parts='NaN'
             
             if element in part_ids:
                 masked_cloud = filter_array_by_column(points, element)
-                ax.scatter(masked_cloud[:,0],masked_cloud[:,1], masked_cloud[:,2], color = 'C2')
-                        
-            else:
+                ax.scatter(masked_cloud[:,0],masked_cloud[:,1], masked_cloud[:,2], s=markersize, color = 'C2')
+                
+            elif element not in dict_assembly.keys():
                 masked_cloud = filter_array_by_column(points, element)
-                ax.scatter(masked_cloud[:,0],masked_cloud[:,1], masked_cloud[:,2], color = 'C0')
-                    
-        
+                ax.scatter(masked_cloud[:,0],masked_cloud[:,1], masked_cloud[:,2], s=markersize, color = 'C7')
+                        
+            elif element in dict_assembly.keys():
+                masked_cloud = filter_array_by_column(points, element)
+                ax.scatter(masked_cloud[:,0],masked_cloud[:,1], masked_cloud[:,2], s=markersize, color = 'C0')
+                            
         # Set labels and legend
         ax.set_xlabel('X')
         ax.set_ylabel('Y')
