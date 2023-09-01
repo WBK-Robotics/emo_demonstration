@@ -43,7 +43,7 @@ def setup_base_sim(mode = "gui"):
     screwdriver = pi.SuctionGripper(screw_drifer_addon_urdf_file, [0, 0, 0], start_orientation, tcp_frame="screw_tip")
     screwdriver.couple(robot,endeffector_name='tool0')
 
-    camera_parameters = {'width': int(1920/32), 'height': int(1080/32), 'fov': 30,
+    camera_parameters = {'width': int(1920/8), 'height': int(1080/8), 'fov': 40,
                          'aspect ratio': 16/9, 'near plane distance': 0.01, 'far plane distance': 100}
     camera = RGBDCamera(camera_addon_urdf_file, [0, 0, 0], start_orientation,
                         camera_parameters=camera_parameters, camera_frame="camera")
