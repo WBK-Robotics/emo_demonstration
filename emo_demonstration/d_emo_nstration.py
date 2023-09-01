@@ -5,13 +5,17 @@ import pybullet_industrial as pi
 import numpy as np
 import rclpy
 import copy
+import math
+import matplotlib.pyplot as plt
 from sensor_msgs.msg import JointState
 from geometry_msgs.msg import WrenchStamped
 from rclpy.node import Node
 
+
 from emo_demonstration.base_simulation import setup_base_sim
 from emo_demonstration.ur5_trajectory_publisher import URTrajectoryPublisher
 from emo_demonstration.io_service_client import IOServiceClient
+from emo_demonstration.camera_demo_parallel import capture_body, visualize_pt_cloud, calculate_point_cloud
 
 def load_assembly(folderPath, spawnPoint, spawnOrient=[0, 0, 0], scaleFactor=1.0):
     """Loads all URDFs in the speciied Folder.
@@ -49,7 +53,7 @@ def load_assembly(folderPath, spawnPoint, spawnOrient=[0, 0, 0], scaleFactor=1.0
         cid.append(p.createConstraint(assembly[0], -1, assembly[i], -1, p.JOINT_FIXED, [0, 0, 0], [0, 0, 0], [0, 0, 0],
                                       [0, 0, 0], [0, 0, 0]))
 
-    return assembly, cid
+    return assembly, cid, files_sorted
 
 def move_linear(endeffector: pi.EndeffectorTool, endPoint, delta=0.02):
     """Moving a designated endeffector to the designated endPoint.
@@ -374,7 +378,7 @@ class emo_controler():
             p.stepSimulation()  
         self.move_linear(gripper, droping_move_up, 0.1, 40)
         return pos_g, orn_g
-     
+         
     
     def switch_to_gripper(self):
         joint_state = { 'shoulder_lift_joint': -np.pi/2,
@@ -419,10 +423,51 @@ class emo_controler():
             self.robot.set_joint_position(joint_state)
             p.stepSimulation()
         self.synchronize_real_pose(2)   
+
+    def capture_body(self, pose, orientation, camera, cutoff_depth, dict_assembly, hold_time_plot, fig=None, ax=None):
+        for i in range(len(pose)):
+            
+            for _ in range(100):
+                camera.set_tool_pose(pose[i], orientation[i])
+                p.stepSimulation()
+            if self.synchronization:
+                self.synchronize_real_pose(4)
+
+            # Create a sample array (100x100 with random values)
+            data, depth_data, mask = camera.get_image()
+            points = calculate_point_cloud(depth_data, camera.get_view_matrix(), camera.projection_matrix, mask, cutoff_depth)
+
+            if i == 0:
+                
+                points_combined = np.array(points)
+                
+            else:
+                    
+                points_combined= np.concatenate([points_combined, np.array(points)])
+            
+            title = 'Pose ' + str(i+1)
+            #multi_p = Process(target=visualize_pt_cloud, args=(points_combined, dict_assembly, title, hold_time_plot,))
+            #multi_p.start()
+            #multi_p.join()
+
+            if fig is not None and ax is not None:
+                visualize_pt_cloud(points_combined, dict_assembly, title, hold_time_plot, fig, ax)
+            
+        return points_combined
+
+
 def main():
     file_directory = os.path.dirname(os.path.abspath(__file__))
     motor_path = os.path.join(file_directory,'urdf', 'DM_EMO_urdf')    
     robot, gripper, screwdriver, camera = setup_base_sim()
+    
+    fig = plt.figure(figsize=(8, 8))
+    ax = fig.add_subplot(111, projection='3d')
+    mngr = plt.get_current_fig_manager()
+    mngr.window.wm_geometry("+0+0")
+
+
+
     controler = emo_controler(robot, synchronization=True)  
     controler.synchronize_real_pose(3.0)
     controler.gripper_node.open_gripper()
@@ -435,28 +480,61 @@ def main():
 
     spawn_point = np.array([-0.0015, -0.003, 0.005])
     spawn_orient = p.getQuaternionFromEuler([0, 0, np.pi/180 * 0.0])
-    motor, constraint_ids = load_assembly(motor_path, spawn_point, spawn_orient, 0.001)
+    motor, constraint_ids, part_names = load_assembly(motor_path, spawn_point, spawn_orient, 0.001)
+    part_names = [name[:-4] for name in part_names]
+    dict_assembly = {motor_id:part for (motor_id, part) in zip(motor, part_names)} 
 
+    dist=0.3
+    angle=math.radians(35.0)
+    cam_poses=[]
+    cam_poses.append(spawn_point + np.array([math.sin(angle)*dist, 0.0, math.cos(angle)*dist]))
+    cam_poses.append(spawn_point + np.array([0.0, math.sin(angle)*dist, math.cos(angle)*dist]))
+    cam_poses.append(spawn_point + np.array([-math.sin(angle)*dist, 0.0, math.cos(angle)*dist]))
+    cam_poses.append(spawn_point + np.array([0.0, -math.sin(angle)*dist, math.cos(angle)*dist]))    
+    cam_poses.append(spawn_point + np.array([0.0, 0, dist]))
+
+    cam_oris=[]
+    cam_oris.append(p.getQuaternionFromEuler([0,np.pi+angle,0]))
+    cam_oris.append(p.getQuaternionFromEuler([angle,np.pi,0]))
+    cam_oris.append(p.getQuaternionFromEuler([0,np.pi-angle,0]))
+    cam_oris.append(p.getQuaternionFromEuler([-angle, np.pi,0]))
+    cam_oris.append(p.getQuaternionFromEuler([0, np.pi,0]))
+
+
+    vis_time = 0.1
+    # Capture PTcloud with camera end effector
+    controler.switch_to_gripper()
+    points = controler.capture_body(cam_poses, cam_oris, camera, 1.0, dict_assembly, 0.1, fig, ax)
+    visualize_pt_cloud(points, dict_assembly, " ", vis_time, fig, ax, ['S1', 'S2', 'S3', 'S4'])
     ###############################################EMO
-    """i=7
+    controler.switch_to_screwdriver()
+    i=7
     for i in range(3,i):
         constraint_ids[i-1] = controler.unscrew(screwdriver, motor[i], constraint_ids[i-1], -0.002)
+        print(i)
     #constraint_ids[i-1] = controler.unscrew(screwdriver, motor[i], constraint_ids[i-1], -0.002)
     controler.switch_to_gripper()
+    points = controler.capture_body(cam_poses, cam_oris, camera, 1.0, dict_assembly, 0.1, fig, ax)
+    visualize_pt_cloud(points, dict_assembly, " ", vis_time, fig, ax, ['S1', 'S2', 'S3', 'S4'])
     for i in range(3,i):
-        controler.grip(gripper, motor[i], [0.0, -0.3, 0.12], constraint_ids[i-1], [0,-0.00,-0.013],0.150)"""
+        controler.grip(gripper, motor[i], [0.0, -0.3, 0.12], constraint_ids[i-1], [0,-0.00,-0.013],0.150)
     #controler.grip(gripper, motor[i], [[0.10, 0.105, 0.8]], constraint_ids[i-1], [0,0.00,-0.01],0.125)
     original_pos = {}
-    controler.switch_to_gripper()
-    """i=1
+    i=1
+    points = controler.capture_body(cam_poses, cam_oris, camera, 1.0, dict_assembly, 0.1, fig, ax)
+    visualize_pt_cloud(points, dict_assembly, " ", vis_time, fig, ax, [part_names[i]])   
     original_pos[i], _ = controler.grip(gripper, motor[i], [-0.2, 0.075, 0.01], constraint_ids[i-1], [0, -0.0565,-0.02], 0.06, False)
     i=2
-    original_pos[i], _ = controler.grip(gripper, motor[i], [-0.2, 0.0, 0.101], constraint_ids[i-1], [0, -0.012,-0.025], 0.19, False)"""
+    points = controler.capture_body(cam_poses, cam_oris, camera, 1.0, dict_assembly, 0.1, fig, ax)
+    visualize_pt_cloud(points, dict_assembly, " ", vis_time, fig, ax, [part_names[i]])      
+    original_pos[i], _ = controler.grip(gripper, motor[i], [-0.2, 0.0, 0.101], constraint_ids[i-1], [0, -0.012,-0.025], 0.19, False)
     i=7
+    points = controler.capture_body(cam_poses, cam_oris, camera, 1.0, dict_assembly, 0.1, fig, ax)
+    visualize_pt_cloud(points, dict_assembly, " ", vis_time, fig, ax, [part_names[i]])  
     original_pos[i], _ = controler.grip(gripper, motor[i] ,[-0.2, -0.150, 0.057], constraint_ids[i-1], [0, -0.042,-0.03], 0.1, False)
 
-    i=7
-    original_pos[i], _ = controler.grip(gripper, motor[i] ,original_pos[i], constraint_ids[i-1], [0, -0.042,-0.03], 0.1, False)
+    #i=7
+    #original_pos[i], _ = controler.grip(gripper, motor[i] ,original_pos[i], constraint_ids[i-1], [0, -0.042,-0.03], 0.1, False)
 
     #####################################################EMO
     """initial_position = spawn_point + np.array([-0.0, 0.0, 0.2]) #np.array([0, 0.2, 1.0])

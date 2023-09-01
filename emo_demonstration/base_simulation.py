@@ -17,8 +17,9 @@ def setup_base_sim(mode = "gui"):
         physics_client = p.connect(p.GUI, options='--background_color_red=0.5 ' +
                                                 '--background_color_green=0.5 ' +
                                                 '--background_color_blue=0.5')
+                                                
         p.configureDebugVisualizer(p.COV_ENABLE_GUI, 0)
-        p.resetDebugVisualizerCamera(cameraDistance=1.5, cameraYaw=-90, cameraPitch=-25, cameraTargetPosition=[0,0,0])
+        p.resetDebugVisualizerCamera(cameraDistance=0.8, cameraYaw=-90, cameraPitch=-25, cameraTargetPosition=[0,0,0.5])
     elif mode == "direct":
         physics_client = p.connect(p.DIRECT)
     elif mode == "shared_memory":
@@ -43,8 +44,8 @@ def setup_base_sim(mode = "gui"):
     screwdriver = pi.SuctionGripper(screw_drifer_addon_urdf_file, [0, 0, 0], start_orientation, tcp_frame="screw_tip")
     screwdriver.couple(robot,endeffector_name='tool0')
 
-    camera_parameters = {'width': int(1920/8), 'height': int(1080/8), 'fov': 40,
-                         'aspect ratio': 16/9, 'near plane distance': 0.01, 'far plane distance': 100}
+    camera_parameters = {'width': int(1920/8), 'height': int(1080/8), 'fov': 60,
+                         'aspect ratio': 16/9, 'near plane distance': 0.01, 'far plane distance': 10}
     camera = RGBDCamera(camera_addon_urdf_file, [0, 0, 0], start_orientation,
                         camera_parameters=camera_parameters, camera_frame="camera")
     camera.couple(robot,endeffector_name='tool0')
