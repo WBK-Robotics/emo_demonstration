@@ -1,0 +1,65 @@
+<?xml version="1.0" ?>
+<robot name="endeffector">
+
+<link name="base">
+</link>
+
+<joint name="base_joint" type="fixed">
+    <parent link="base"/>
+    <child link="milling_tool"/>
+    <origin rpy="0 0 0" xyz="-0.00 0.0 -0.0"/>
+</joint>
+
+<link name="milling_tool">
+    <contact>
+        <friction_anchor/>
+        <stiffness value="3.0"/>
+        <damping value="100000.00"/>
+        <spinning_friction value="1.0"/>
+        <lateral_friction value="1.0"/>
+        <contact_cfm value="10000.0" />
+        <contact_erp value="0.0" />
+    </contact>
+    <visual>
+        <origin rpy="1.570796327 0 1.570796327" xyz="0.00 0.004 0.08"/>
+        <geometry>
+            <mesh filename="endeffector_mesh/Dremel_2.stl" scale="0.001 0.001 0.001"/>
+        </geometry>
+    </visual>
+</link>
+
+<joint name="mill_joint" type="fixed">
+    <parent link="base"/>
+    <child link="mill_tip"/>
+    <origin rpy="0 0 0" xyz="-0.106 0.125 0.028"/>
+</joint>
+
+<link name="mill_tip">
+    <visual>
+        <origin rpy="1.570796327 0 0" xyz="-0.0 -0.02 0.0 "/>
+        <geometry>
+            <cylinder radius="0.0016" length="0.04"/>
+        </geometry>
+        <material name="yellow">
+            <color rgba="0.7 0.7 0.0 1.0"/>
+        </material>
+    </visual>
+</link>
+
+<joint name="mill_joint2" type="fixed">
+    <parent link="base"/>
+    <child link="mill_tip_2"/>
+    <origin rpy="0 0 0" xyz="-0.106 0.125 0.028"/>
+</joint>
+
+<link name="mill_tip_2">
+    <visual>
+        <geometry>
+            <sphere radius="0.0016"/>
+        </geometry>
+        <material name="red">
+            <color rgba="1.0 0.0 0.0 1.0"/>
+        </material>
+    </visual>
+</link>
+</robot>

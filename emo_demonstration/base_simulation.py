@@ -6,12 +6,13 @@ import pybullet_industrial as pi
 from emo_demonstration.depth_camera import RGBDCamera
 
 
-def setup_base_sim(mode = "gui"):
+def setup_base_sim(mode = "gui", tool_mode = "camera"):
     file_directory = os.path.dirname(os.path.abspath(__file__))
     sdmbot_urdf_file = os.path.join(file_directory, 'urdf', 'sdmbot copy.urdf')
-    main_endeffector_urdf_file = os.path.join(file_directory, 'urdf', 'endeffectorV2.urdf')
+    main_endeffector_urdf_file = os.path.join(file_directory, 'urdf', 'endeffectorV3.urdf')
     screw_drifer_addon_urdf_file = os.path.join(file_directory, 'urdf', 'screw_driver_addon.urdf')
     camera_addon_urdf_file = os.path.join(file_directory, 'urdf', 'depth_camera.urdf')
+    milling_addon_urdf_file = os.path.join(file_directory, 'urdf', 'milling_addon.urdf')
 
     if mode == "gui":
         physics_client = p.connect(p.GUI, options='--background_color_red=0.5 ' +
@@ -44,12 +45,16 @@ def setup_base_sim(mode = "gui"):
     screwdriver = pi.SuctionGripper(screw_drifer_addon_urdf_file, [0, 0, 0], start_orientation, tcp_frame="screw_tip")
     screwdriver.couple(robot,endeffector_name='tool0')
 
-    camera_parameters = {'width': int(1920/8), 'height': int(1080/8), 'fov': 60,
-                         'aspect ratio': 16/9, 'near plane distance': 0.01, 'far plane distance': 10}
-    camera = RGBDCamera(camera_addon_urdf_file, [0, 0, 0], start_orientation,
-                        camera_parameters=camera_parameters, camera_frame="camera")
-    camera.couple(robot,endeffector_name='tool0')
 
+    if tool_mode == "milling":
+        milling_tool = pi.EndeffectorTool(milling_addon_urdf_file, [0, 0, 0], start_orientation, tcp_frame="mill_tip")
+        milling_tool.couple(robot, endeffector_name='tool0')
+    else:
+        camera_parameters = {'width': int(1920/8), 'height': int(1080/8), 'fov': 60,
+                             'aspect ratio': 16/9, 'near plane distance': 0.01, 'far plane distance': 10}
+        camera = RGBDCamera(camera_addon_urdf_file, [0, 0, 0], start_orientation,
+                            camera_parameters=camera_parameters, camera_frame="camera")
+        camera.couple(robot,endeffector_name='tool0')
 
     joint_state = {'shoulder_lift_joint': -np.pi/2,
                    'elbow_joint': -np.pi/2,
@@ -61,8 +66,10 @@ def setup_base_sim(mode = "gui"):
         robot.set_joint_position(joint_state)
         p.stepSimulation()
 
-    return robot, gripper, screwdriver, camera
-
+    if tool_mode == "milling":
+        return robot, gripper, screwdriver, milling_tool
+    else:
+        return robot, gripper, screwdriver, camera
 if __name__ == "__main__":
     import numpy as np
 

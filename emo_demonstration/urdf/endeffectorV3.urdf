@@ -1,0 +1,111 @@
+<?xml version="1.0" ?>
+<robot name="endeffector">
+
+<link name="base">
+    <visual>
+        <origin rpy="0 0 0" xyz="0 0 0.00"/>
+        <geometry>
+				<mesh filename="endeffector_mesh/Gesamtaufbau_V2.stl" scale="0.001 0.001 0.001"/>
+        </geometry>
+</visual>
+</link>
+
+<joint name="base_joint" type="fixed">
+    <parent link="base"/>
+    <child link="screwdriver"/>
+    <origin rpy="0 0 0" xyz="0 0 0"/>
+</joint>
+
+<link name="screwdriver">
+</link>
+<joint name="screwdriver_joint" type="fixed">
+    <parent link="base"/>
+    <child link="screw_tip"/>
+    <origin rpy="0 0 0" xyz="0.083 -0.104 0.026"/>
+</joint>
+
+<link name="screw_tip">
+</link>
+
+<joint name="left_jaw" type ="prismatic">
+    <parent link="base"/>
+    <child link="left_jaw_link"/>
+    <axis xyz="0 1 0"/>
+    <limit effort="1" lower="0" upper="0.01" velocity="0.01"/>
+</joint>
+
+<link name="left_jaw_link">
+    <contact>
+        <friction_anchor/>
+        <stiffness value="1.0"/>
+        <damping value="1000.0"/>
+			<lateral_friction value="1.0" />
+			<spinning_friction value="0.2" />
+			<rolling_friction value="0.001" />
+        <contact_cfm value="0.5" />
+        <contact_erp value="0.5" />
+    </contact>
+    <visual>
+        <origin rpy="1.570796327 0 1.570796327" xyz="0 0.003 0.080"/>
+        <geometry>
+            <mesh filename="endeffector_mesh/Backe1_V2.stl" scale="0.001 0.001 0.001"/>
+        </geometry>
+    </visual>
+    <collision>
+        <origin rpy="1.570796327 0 1.570796327" xyz="0 0.003 0.080"/>
+        <geometry>
+            <mesh filename="endeffector_mesh/Backe1_V2.stl" scale="0.001 0.001 0.001"/>
+        </geometry>
+    </collision>
+</link>
+
+<joint name="right_jaw" type ="prismatic">
+    <parent link="base"/>
+    <child link="right_jaw_link"/>
+    <axis xyz="0 -1 0"/>
+    <limit effort="1" lower="0" upper="0.01" velocity="0.01"/>
+</joint>
+
+<link name="right_jaw_link">
+    <contact>
+        <friction_anchor/>
+        <stiffness value="1.0"/>
+        <damping value="1000.0"/>
+			<lateral_friction value="1.0" />
+			<spinning_friction value="0.2" />
+			<rolling_friction value="0.001" />
+        <contact_cfm value="0.5" />
+        <contact_erp value="0.5" />
+    </contact>
+    <visual>
+        <origin rpy="1.570796327 0 1.570796327" xyz="0 0.003 0.080"/>
+        <geometry>
+            <mesh filename="endeffector_mesh/Backe2_V2.stl" scale="0.001 0.001 0.001"/>
+        </geometry>
+    </visual>
+    <collision>
+        <origin rpy="1.570796327 0 1.570796327" xyz="0 0.003 0.080"/> 
+        <geometry>
+            <mesh filename="endeffector_mesh/Backe2_V2.stl" scale="0.001 0.001 0.001"/>
+        </geometry>
+    </collision>
+</link>
+
+<joint name="gripper_center" type="fixed">
+    <parent link="base"/>
+    <child link="gripper_center_link"/>
+    <origin rpy="0 0 0" xyz="0.0 0.0 0.16"/>
+</joint>
+
+<link name="gripper_center_link">
+<visual>
+    <geometry>
+        <sphere radius="0.005"/>
+    </geometry>
+    <material name="green">
+        <color rgba="0.0 1.0 0.0 1.0"/>
+    </material>
+</visual>
+</link>
+
+</robot>
