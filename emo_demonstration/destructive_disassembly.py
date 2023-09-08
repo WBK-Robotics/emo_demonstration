@@ -50,8 +50,8 @@ def execute_milling(endeffector, spawn_point, spawn_orient, path_file):
         tool_path = []
         for line in file:
             x, y, z = map(float, line.strip().split())
-            
-            tool_path.append(p.multiplyTransforms(spawn_point, spawn_orient, [x,y,z], [0,0,0,1]))
+            pnt, _ = p.multiplyTransforms(spawn_point, spawn_orient, np.array([x,y,z])/1000, [0,0,0,1])
+            tool_path.append(np.array(pnt))
     [startPoint, start_orient] = endeffector.get_tool_pose()
     endeffector.set_tool_pose(tool_path[0] + np.array([0,0,0.01]), start_orient)
     p.stepSimulation()
