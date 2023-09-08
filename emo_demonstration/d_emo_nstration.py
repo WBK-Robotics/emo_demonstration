@@ -10,7 +10,7 @@ import matplotlib.pyplot as plt
 from sensor_msgs.msg import JointState
 from geometry_msgs.msg import WrenchStamped
 from rclpy.node import Node
-
+from PIL import Image
 
 from emo_demonstration.base_simulation import setup_base_sim
 from emo_demonstration.ur5_trajectory_publisher import URTrajectoryPublisher
@@ -54,6 +54,15 @@ def load_assembly(folderPath, spawnPoint, spawnOrient=[0, 0, 0], scaleFactor=1.0
                                       [0, 0, 0], [0, 0, 0]))
 
     return assembly, cid, files_sorted
+def visualize_planning(path, hold_time_plot, fig, ax):
+    image_files = [f for f in os.listdir(path) if os.path.isfile(os.path.join(path, f)) and f.lower().endswith('.png')]
+    image_files_sorted = sorted(image_files)
+    for image in image_files_sorted:
+        ax.clear()
+        img = Image.open(os.path.join(path, image))
+        ax.imshow(img)
+        fig.canvas.draw()    # draw the canvas, cache the renderer
+        plt.pause(hold_time_plot)
 
 def move_linear(endeffector: pi.EndeffectorTool, endPoint, delta=0.02):
     """Moving a designated endeffector to the designated endPoint.
@@ -424,6 +433,34 @@ class emo_controler():
             p.stepSimulation()
         self.synchronize_real_pose(2)   
 
+    def switch_to_milling_tool(self):
+        joint_state = { 'shoulder_lift_joint': -np.pi/2,
+                        'elbow_joint': -np.pi/2,
+                        'wrist_1_joint': -np.pi/2,
+                        'wrist_2_joint': np.pi/2,
+                        'wrist_3_joint': 0,
+                        'shoulder_pan_joint': np.pi/2}
+        for _ in range(50):
+            self.robot.set_joint_position(joint_state)
+            p.stepSimulation()
+        self.synchronize_real_pose(2)
+        joint_state["wrist_2_joint"]=0
+        """for _ in range(50):
+            self.robot.set_joint_position(joint_state)
+            p.stepSimulation()"""
+        self.synchronize_real_pose(2)        
+        joint_state["wrist_1_joint"]=-np.pi
+        for _ in range(50):
+            self.robot.set_joint_position(joint_state)
+            p.stepSimulation()
+        self.synchronize_real_pose(2)
+        joint_state["wrist_3_joint"]=-np.pi
+        for _ in range(50):
+            self.robot.set_joint_position(joint_state)
+            p.stepSimulation()
+        self.synchronize_real_pose(2)
+
+
     def capture_body(self, pose, orientation, camera, cutoff_depth, dict_assembly, hold_time_plot, fig=None, ax=None):
         for i in range(len(pose)):
             
@@ -454,21 +491,41 @@ class emo_controler():
                 visualize_pt_cloud(points_combined, dict_assembly, title, hold_time_plot, fig, ax)
             
         return points_combined
-
+    def execute_milling(self, endeffector, path_file, spawn_point, spawn_orient, feed = 0.5):
+        with open(path_file, "r") as file:
+            tool_path = []
+            for line in file:
+                x, y, z = map(float, line.strip().split())
+                p.multiplyTransforms(spawn_point, spawn_orient, [x,y,z], [0,0,0,1])
+                tool_path.append(p.multiplyTransforms(spawn_point, spawn_orient, [x,y,z], [0,0,0,1]))
+        print("moving to milling position")
+        self.move_linear(endeffector, tool_path[0] + np.array([0,0,0.01]), 0.1, 40)
+        self.move_linear(endeffector, tool_path[0], 0.005, 1)
+        [_, start_orient] = endeffector.get_tool_pose()
+        for i in range(1, len(tool_path)):
+            p.addUserDebugLine(tool_path[i] , tool_path[i-1], lineColorRGB=[1.0, 0,0], lineWidth=2.0, lifeTime=0)
+            endeffector.set_tool_pose(tool_path[i]/1000+spawn_point, start_orient)
+            p.stepSimulation()
+            time_val = np.linalg.norm(tool_path[i] - tool_path[i-1])/feed*1000
+            if self.synchronization:
+                self.synchronize_real_pose(time_val)
+        self.move_linear(endeffector, tool_path[-1] + np.array([0,0,0.04]))
 
 def main():
     file_directory = os.path.dirname(os.path.abspath(__file__))
-    motor_path = os.path.join(file_directory,'urdf', 'DM_EMO_urdf')    
+    motor_path = os.path.join(file_directory,'urdf', 'DM_EMO_urdf') 
+    seq_path = os.path.join(file_directory,'Seq', 'plan')    
+    action_path = os.path.join(file_directory,'Seq', 'Actions')    
     robot, gripper, screwdriver, camera = setup_base_sim()
     
     fig = plt.figure(figsize=(8, 8))
-    ax = fig.add_subplot(111, projection='3d')
+    ax = fig.add_subplot(111)
     mngr = plt.get_current_fig_manager()
     mngr.window.wm_geometry("+0+0")
 
 
 
-    controler = emo_controler(robot, synchronization=True)  
+    controler = emo_controler(robot, synchronization=False)  
     controler.synchronize_real_pose(3.0)
     controler.gripper_node.open_gripper()
     gripper.actuate(1.0)
@@ -483,6 +540,22 @@ def main():
     motor, constraint_ids, part_names = load_assembly(motor_path, spawn_point, spawn_orient, 0.001)
     part_names = [name[:-4] for name in part_names]
     dict_assembly = {motor_id:part for (motor_id, part) in zip(motor, part_names)} 
+ 
+    print("PRESS 1 TO START")
+    waiting = True
+    while waiting:
+        p.stepSimulation()
+        keys = p.getKeyboardEvents()
+        for key, state in keys.items():
+            if state == p.KEY_IS_DOWN:
+                if key == ord('1'):
+                    waiting=False
+
+    visualize_planning(seq_path, 0.1, fig, ax)
+    time.sleep(5)
+    visualize_planning(action_path, 1.0, fig, ax)
+    fig.clear()
+    ax = fig.add_subplot(111, projection='3d')
 
     dist=0.3
     angle=math.radians(35.0)
@@ -522,15 +595,15 @@ def main():
     original_pos = {}
     i=1
     points = controler.capture_body(cam_poses, cam_oris, camera, 1.0, dict_assembly, 0.1, fig, ax)
-    visualize_pt_cloud(points, dict_assembly, " ", vis_time, fig, ax, [part_names[i]])   
-    original_pos[i], _ = controler.grip(gripper, motor[i], [-0.2, 0.075, 0.01], constraint_ids[i-1], [0, -0.0565,-0.02], 0.06, False)
+    visualize_pt_cloud(points, dict_assembly, " ", vis_time, fig, ax, ['L2'])   
+    original_pos[i], _ = controler.grip(gripper, motor[i], [-0.2, 0.075, 0.01], constraint_ids[i-1], [0, -0.056,-0.02], 0.06, False)
     i=2
     points = controler.capture_body(cam_poses, cam_oris, camera, 1.0, dict_assembly, 0.1, fig, ax)
-    visualize_pt_cloud(points, dict_assembly, " ", vis_time, fig, ax, [part_names[i]])      
+    visualize_pt_cloud(points, dict_assembly, " ", vis_time, fig, ax, ['Ro'])      
     original_pos[i], _ = controler.grip(gripper, motor[i], [-0.2, 0.0, 0.101], constraint_ids[i-1], [0, -0.012,-0.025], 0.19, False)
     i=7
     points = controler.capture_body(cam_poses, cam_oris, camera, 1.0, dict_assembly, 0.1, fig, ax)
-    visualize_pt_cloud(points, dict_assembly, " ", vis_time, fig, ax, [part_names[i]])  
+    visualize_pt_cloud(points, dict_assembly, " ", vis_time, fig, ax, ['St'])  
     original_pos[i], _ = controler.grip(gripper, motor[i] ,[-0.2, -0.150, 0.057], constraint_ids[i-1], [0, -0.042,-0.03], 0.1, False)
 
     #i=7

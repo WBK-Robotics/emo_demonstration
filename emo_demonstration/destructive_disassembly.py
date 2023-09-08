@@ -45,22 +45,23 @@ def load_assembly(folderPath, spawnPoint, spawnOrient=[0, 0, 0], scaleFactor=1.0
 
     return assembly, cid, files_sorted
 
-def execute_milling(endeffector, spawn_point, path_file):
+def execute_milling(endeffector, spawn_point, spawn_orient, path_file):
     with open(path_file, "r") as file:
         tool_path = []
         for line in file:
             x, y, z = map(float, line.strip().split())
-            tool_path.append(np.array([x,y,z]))
+            
+            tool_path.append(p.multiplyTransforms(spawn_point, spawn_orient, [x,y,z], [0,0,0,1]))
     [startPoint, start_orient] = endeffector.get_tool_pose()
-    endeffector.set_tool_pose(tool_path[0] / 1000 + spawn_point + np.array([0,0,0.01]), start_orient)
+    endeffector.set_tool_pose(tool_path[0] + np.array([0,0,0.01]), start_orient)
     p.stepSimulation()
-    endeffector.set_tool_pose(tool_path[0] / 1000 + spawn_point, start_orient)
+    endeffector.set_tool_pose(tool_path[0], start_orient)
     p.stepSimulation()
     for i in range(1, len(tool_path)):
-        endeffector.set_tool_pose(tool_path[i]/1000+spawn_point, start_orient)
+        endeffector.set_tool_pose(tool_path[i], start_orient)
         p.stepSimulation()
-        p.addUserDebugLine(tool_path[i] / 1000 + spawn_point, tool_path[i-1] / 1000 + spawn_point,lineColorRGB=[1.0, 0,0], lineWidth=2.0, lifeTime=0)
-    endeffector.set_tool_pose(tool_path[-1] / 1000 + spawn_point + np.array([0,0,0.02]), start_orient)
+        p.addUserDebugLine(tool_path[i], tool_path[i-1],lineColorRGB=[1.0, 0,0], lineWidth=2.0, lifeTime=0)
+    endeffector.set_tool_pose(tool_path[-1] + np.array([0,0,0.02]), start_orient)
     p.stepSimulation()
 
 def switch_to_milling_tool(robot):
@@ -111,7 +112,7 @@ if __name__ == "__main__":
     dict_assembly = {motor_id: part for (motor_id, part) in zip(motor, part_names)}
     switch_to_milling_tool(robot)
 
-    execute_milling(milling_tool, spawn_point, os.path.join(file_directory,"tool_path_0_1.txt"))
+    execute_milling(milling_tool, spawn_point, spawn_orient, os.path.join(file_directory,"Seq", "tool_path_0_1.txt"))
 
     while True:
         p.stepSimulation()
