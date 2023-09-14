@@ -31,7 +31,7 @@
 <joint name="mill_joint" type="fixed">
     <parent link="base"/>
     <child link="mill_tip"/>
-    <origin rpy="0 0 0" xyz="-0.106 0.125 0.028"/>
+    <origin rpy="0 0 0" xyz="-0.1055 0.12 0.0265"/>
 </joint>
 
 <link name="mill_tip">
@@ -49,7 +49,7 @@
 <joint name="mill_joint2" type="fixed">
     <parent link="base"/>
     <child link="mill_tip_2"/>
-    <origin rpy="0 0 0" xyz="-0.106 0.125 0.028"/>
+    <origin rpy="0 0 0" xyz="-0.1055 0.12 0.027"/>
 </joint>
 
 <link name="mill_tip_2">

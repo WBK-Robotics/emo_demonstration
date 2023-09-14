@@ -312,7 +312,7 @@ class emo_controler():
         us_pos_up = np.array(p.getLinkState(screw_Pid, 0)[0])
         us_pos_up[2] = us_pos_up[2] + 0.08
         print(f"us_pos_up: {us_pos_up}")
-        self.move_linear(screwdriver, us_pos_up, 0.1, 40)
+        self.move_linear(screwdriver, us_pos_up, 0.2, 60)
         us_target_pos = copy.deepcopy(us_pos_up)
         us_target_pos[2] = us_target_pos[2] - get_min_dist(screwdriver.urdf, screw_Pid) + offset
         print(us_target_pos)
@@ -328,7 +328,7 @@ class emo_controler():
         us_pos_up2 = np.array(p.getLinkState(object_Pid, 0)[0]) + np.array(offset)
         us_pos_up2[2] = us_pos_up2[2] + delta_up
         print(f"us_pos_up: {us_pos_up}")
-        self.move_linear(gripper, us_pos_up, 0.1, 40)
+        self.move_linear(gripper, us_pos_up, 0.2, 60)
 
         if inverted:
             gripper.actuate(0.0)
@@ -491,22 +491,25 @@ class emo_controler():
                 visualize_pt_cloud(points_combined, dict_assembly, title, hold_time_plot, fig, ax)
             
         return points_combined
-    def execute_milling(self, endeffector, path_file, spawn_point, spawn_orient, feed = 0.5):
+    def execute_milling(self, endeffector, path_file, spawn_point, spawn_orient, feed = 10):
+        [_, start_orient] = endeffector.get_tool_pose()
         with open(path_file, "r") as file:
             tool_path = []
             for line in file:
                 x, y, z = map(float, line.strip().split())
-                p.multiplyTransforms(spawn_point, spawn_orient, [x,y,z], [0,0,0,1])
-                tool_path.append(p.multiplyTransforms(spawn_point, spawn_orient, [x,y,z], [0,0,0,1]))
+                #pnt, _ = p.multiplyTransforms(spawn_point, spawn_orient, np.array([x,y,z])/1000, [0,0,0,1])
+                tool_path.append(np.array([x,y,z])/1000+spawn_point)
         print("moving to milling position")
         self.move_linear(endeffector, tool_path[0] + np.array([0,0,0.01]), 0.1, 40)
-        self.move_linear(endeffector, tool_path[0], 0.005, 1)
-        [_, start_orient] = endeffector.get_tool_pose()
+        self.move_linear(endeffector, tool_path[0], 0.005, feed)
+        #time.sleep(3600)
         for i in range(1, len(tool_path)):
             p.addUserDebugLine(tool_path[i] , tool_path[i-1], lineColorRGB=[1.0, 0,0], lineWidth=2.0, lifeTime=0)
-            endeffector.set_tool_pose(tool_path[i]/1000+spawn_point, start_orient)
-            p.stepSimulation()
+            for _ in range(50):
+                endeffector.set_tool_pose(tool_path[i], start_orient)
+                p.stepSimulation()
             time_val = np.linalg.norm(tool_path[i] - tool_path[i-1])/feed*1000
+            print(f'step {i}/{len(tool_path)}, {np.linalg.norm(tool_path[i] - tool_path[i-1])}mm/{time_val}s {feed}')
             if self.synchronization:
                 self.synchronize_real_pose(time_val)
         self.move_linear(endeffector, tool_path[-1] + np.array([0,0,0.04]))
@@ -589,6 +592,7 @@ def main():
     controler.switch_to_gripper()
     points = controler.capture_body(cam_poses, cam_oris, camera, 1.0, dict_assembly, 0.1, fig, ax)
     visualize_pt_cloud(points, dict_assembly, " ", vis_time, fig, ax, ['S1', 'S2', 'S3', 'S4'])
+    i=7
     for i in range(3,i):
         controler.grip(gripper, motor[i], [0.0, -0.3, 0.12], constraint_ids[i-1], [0,-0.00,-0.013],0.150)
     #controler.grip(gripper, motor[i], [[0.10, 0.105, 0.8]], constraint_ids[i-1], [0,0.00,-0.01],0.125)
