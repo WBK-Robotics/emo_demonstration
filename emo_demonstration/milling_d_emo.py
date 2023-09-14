@@ -67,7 +67,7 @@ def main():
         motor, constraint_ids, part_names = load_assembly(motor_path, spawn_point, spawn_orient, 0.001)
         part_names = [name[:-4] for name in part_names]
         print("done")
-
+        time.sleep(3600)
         """i=part_names.index("S4")+1
         for i in range(3,i):
             controler.switch_to_screwdriver()            

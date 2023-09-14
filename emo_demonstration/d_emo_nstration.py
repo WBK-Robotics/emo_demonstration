@@ -528,7 +528,7 @@ def main():
 
 
 
-    controler = emo_controler(robot, synchronization=False)  
+    controler = emo_controler(robot, synchronization=True)  
     controler.synchronize_real_pose(3.0)
     controler.gripper_node.open_gripper()
     gripper.actuate(1.0)
