@@ -556,40 +556,44 @@ def main():
                         waiting=False
                         mode = "gripping"
                         motor_path = os.path.join(file_directory,'urdf', 'DM_EMO_urdf_light') 
-        motor, constraint_ids, part_names = load_assembly(motor_path, spawn_point, spawn_orient, 0.001)
-        part_names = [name[:-4] for name in part_names]
-        dict_assembly = {motor_id:part for (motor_id, part) in zip(motor, part_names)} 
-        waiting = True
-        print("PRESS 1 TO START")
-        while waiting:
-            p.stepSimulation()
-            keys = p.getKeyboardEvents()
-            for key, state in keys.items():
-                if state == p.KEY_IS_DOWN:
-                    if key == ord('1'):
+                    elif key == ord('3'):
                         waiting=False
-        ax = fig.add_subplot(111)
-        visualize_planning(seq_path, 0.1, fig, ax)
-        time.sleep(3)
-        visualize_planning(action_path, 1.0, fig, ax)
-        fig.clear()
-        ax = fig.add_subplot(111, projection='3d')
+                        mode = "party"
+        if mode == "screwing" or mode == "gripping":
+            motor, constraint_ids, part_names = load_assembly(motor_path, spawn_point, spawn_orient, 0.001)
+            part_names = [name[:-4] for name in part_names]
+            dict_assembly = {motor_id:part for (motor_id, part) in zip(motor, part_names)} 
+            waiting = True
+            print("PRESS 1 TO START")
+            while waiting:
+                p.stepSimulation()
+                keys = p.getKeyboardEvents()
+                for key, state in keys.items():
+                    if state == p.KEY_IS_DOWN:
+                        if key == ord('1'):
+                            waiting=False
+            ax = fig.add_subplot(111)
+            visualize_planning(seq_path, 0.1, fig, ax)
+            time.sleep(3)
+            visualize_planning(action_path, 1.0, fig, ax)
+            fig.clear()
+            ax = fig.add_subplot(111, projection='3d')
 
-        dist=0.3
-        angle=math.radians(35.0)
-        cam_poses=[]
-        cam_poses.append(spawn_point + np.array([math.sin(angle)*dist, 0.0, math.cos(angle)*dist]))
-        cam_poses.append(spawn_point + np.array([0.0, math.sin(angle)*dist, math.cos(angle)*dist]))
-        cam_poses.append(spawn_point + np.array([-math.sin(angle)*dist, 0.0, math.cos(angle)*dist]))
-        cam_poses.append(spawn_point + np.array([0.0, -math.sin(angle)*dist, math.cos(angle)*dist]))    
-        cam_poses.append(spawn_point + np.array([0.0, 0, dist]))
+            dist=0.3
+            angle=math.radians(35.0)
+            cam_poses=[]
+            cam_poses.append(spawn_point + np.array([math.sin(angle)*dist, 0.0, math.cos(angle)*dist]))
+            cam_poses.append(spawn_point + np.array([0.0, math.sin(angle)*dist, math.cos(angle)*dist]))
+            cam_poses.append(spawn_point + np.array([-math.sin(angle)*dist, 0.0, math.cos(angle)*dist]))
+            cam_poses.append(spawn_point + np.array([0.0, -math.sin(angle)*dist, math.cos(angle)*dist]))    
+            cam_poses.append(spawn_point + np.array([0.0, 0, dist]))
 
-        cam_oris=[]
-        cam_oris.append(p.getQuaternionFromEuler([0,np.pi+angle,0]))
-        cam_oris.append(p.getQuaternionFromEuler([angle,np.pi,0]))
-        cam_oris.append(p.getQuaternionFromEuler([0,np.pi-angle,0]))
-        cam_oris.append(p.getQuaternionFromEuler([-angle, np.pi,0]))
-        cam_oris.append(p.getQuaternionFromEuler([0, np.pi,0]))
+            cam_oris=[]
+            cam_oris.append(p.getQuaternionFromEuler([0,np.pi+angle,0]))
+            cam_oris.append(p.getQuaternionFromEuler([angle,np.pi,0]))
+            cam_oris.append(p.getQuaternionFromEuler([0,np.pi-angle,0]))
+            cam_oris.append(p.getQuaternionFromEuler([-angle, np.pi,0]))
+            cam_oris.append(p.getQuaternionFromEuler([0, np.pi,0]))
 
         if mode == "screwing":
 
@@ -648,11 +652,70 @@ def main():
             points = controler.capture_body(cam_poses, cam_oris, camera, 1.0, dict_assembly, 0.1, fig, ax)
             visualize_pt_cloud(points, dict_assembly, " ", vis_time, fig, ax, ['St'])  
             original_pos[i], _ = controler.grip(gripper, motor[i] ,[-0.2, -0.150, 0.057], constraint_ids[i-1], [0, -0.042,-0.03], 0.1, False)
-        fig.delaxes(ax)
-        for part_id in motor:
-            p.removeBody(part_id)
+        elif mode == "party":
+            joint_state = {'shoulder_lift_joint': -np.pi/2,
+                'elbow_joint': -np.pi/2,
+                'wrist_1_joint': -np.pi,
+                'wrist_2_joint': 0,
+                'wrist_3_joint': -np.pi/2,
+                'shoulder_pan_joint': np.pi/2}
+            for _ in range(100):
+                robot.set_joint_position(joint_state)
+                p.stepSimulation()
+            controler.synchronize_real_pose(2)
+            [start_pos, start_orient] = gripper.get_tool_pose()
+            for _ in range(4):    
+                for _ in range(30):
+                    gripper.set_tool_pose(start_pos + np.array([0,0.1,0]), p.getQuaternionFromEuler([np.pi/2,np.pi/2+10.0/180*np.pi, -np.pi/2]))
+                    p.stepSimulation()
+                controler.synchronize_real_pose(0.75)
+                for _ in range(2):
+                    gripper.actuate(0)
+                    controler.gripper_node.close_gripper()
+                    for _ in range(30):
+                        gripper.set_tool_pose(start_pos + np.array([0,0.1,0.01]), p.getQuaternionFromEuler([np.pi/2,np.pi/2+5.0/180*np.pi, -np.pi/2]))
+                        p.stepSimulation()
+                    controler.synchronize_real_pose(0.15)
+                    gripper.actuate(1.0)
+                    controler.gripper_node.open_gripper()
+                    for _ in range(30):
+                        gripper.set_tool_pose(start_pos + np.array([0,0.1,0.0]), p.getQuaternionFromEuler([np.pi/2,np.pi/2+10.0/180*np.pi, -np.pi/2]))
+                        p.stepSimulation()
+                    controler.synchronize_real_pose(0.15)
+
+                for _ in range(30):
+                    gripper.set_tool_pose(start_pos + np.array([0,0,0]), p.getQuaternionFromEuler([np.pi/2,np.pi/2-10.0/180*np.pi, -np.pi/2]))
+                    p.stepSimulation()
+                controler.synchronize_real_pose(0.75)
+                for _ in range(2):
+                    gripper.actuate(0)
+                    controler.gripper_node.close_gripper()
+                    for _ in range(30):
+                        gripper.set_tool_pose(start_pos + np.array([0,0,0.01]), p.getQuaternionFromEuler([np.pi/2,np.pi/2-5.0/180*np.pi, -np.pi/2]))
+                        p.stepSimulation()
+                    controler.synchronize_real_pose(0.15)
+                    gripper.actuate(1.0)
+                    controler.gripper_node.open_gripper()
+                    for _ in range(30):
+                        gripper.set_tool_pose(start_pos + np.array([0,0,0.0]), p.getQuaternionFromEuler([np.pi/2,np.pi/2-10.0/180*np.pi, -np.pi/2]))
+                        p.stepSimulation()
+                    controler.synchronize_real_pose(0.15)
+
+            for _ in range(50):
+                gripper.set_tool_pose(start_pos + np.array([0,0,0]), p.getQuaternionFromEuler([np.pi/2,np.pi/2+45.0/180*np.pi, -np.pi/2]))
+                p.stepSimulation()
+            controler.synchronize_real_pose(2)
+            for _ in range(50):
+                gripper.set_tool_pose(start_pos + np.array([0,0,0]), p.getQuaternionFromEuler([np.pi/2,np.pi/2+0.0/180*np.pi, -np.pi/2]))
+                p.stepSimulation()
+            controler.synchronize_real_pose(0.5)
+
+        if mode == "screwing" or mode == "gripping":
+            fig.delaxes(ax)
+            for part_id in motor:
+                p.removeBody(part_id)
         #original_pos[i], _ = controler.grip(gripper, motor[i] ,original_pos[i], constraint_ids[i-1], [0, -0.042,-0.03], 0.1, False)
-        
+
     #i=7
     #original_pos[i], _ = controler.grip(gripper, motor[i] ,original_pos[i], constraint_ids[i-1], [0, -0.042,-0.03], 0.1, False)
 
