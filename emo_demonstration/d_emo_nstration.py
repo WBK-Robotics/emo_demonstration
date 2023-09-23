@@ -318,7 +318,7 @@ class emo_controler():
         print(us_target_pos)
         self.move_linear(screwdriver, us_target_pos, 0.02, 10)
         if self.synchronization:
-            constraint = self.force_control_screw(screwdriver, screw_Pid, constraint, 37.0, 0.25, 13, offset=0.00045)
+            constraint = self.force_control_screw(screwdriver, screw_Pid, constraint, 40.0, 0.25, 13, offset=0.00045)
         self.move_linear(screwdriver, us_pos_up, 0.05, 20)
         return constraint
     
@@ -516,13 +516,12 @@ class emo_controler():
 
 def main():
     file_directory = os.path.dirname(os.path.abspath(__file__))
-    motor_path = os.path.join(file_directory,'urdf', 'DM_EMO_urdf') 
     seq_path = os.path.join(file_directory,'Seq', 'plan')    
     action_path = os.path.join(file_directory,'Seq', 'Actions')    
     robot, gripper, screwdriver, camera = setup_base_sim()
     
     fig = plt.figure(figsize=(8, 8))
-    ax = fig.add_subplot(111)
+    
     mngr = plt.get_current_fig_manager()
     mngr.window.wm_geometry("+0+0")
 
@@ -538,78 +537,122 @@ def main():
     #controler.switch_to_screwdriver()
     
 
-    spawn_point = np.array([-0.0015, -0.003, 0.005])
+    spawn_point = np.array([-0.0013, -0.004, 0.005])
     spawn_orient = p.getQuaternionFromEuler([0, 0, np.pi/180 * 0.0])
-    motor, constraint_ids, part_names = load_assembly(motor_path, spawn_point, spawn_orient, 0.001)
-    part_names = [name[:-4] for name in part_names]
-    dict_assembly = {motor_id:part for (motor_id, part) in zip(motor, part_names)} 
- 
-    print("PRESS 1 TO START")
-    waiting = True
-    while waiting:
-        p.stepSimulation()
-        keys = p.getKeyboardEvents()
-        for key, state in keys.items():
-            if state == p.KEY_IS_DOWN:
-                if key == ord('1'):
-                    waiting=False
 
-    visualize_planning(seq_path, 0.1, fig, ax)
-    time.sleep(5)
-    visualize_planning(action_path, 1.0, fig, ax)
-    fig.clear()
-    ax = fig.add_subplot(111, projection='3d')
+    while True:
+        print("PRESS 1 FOR SCREWING PRESS 2 FOR GRIPPING")
+        waiting = True
+        while waiting:
+            p.stepSimulation()
+            keys = p.getKeyboardEvents()
+            for key, state in keys.items():
+                if state == p.KEY_IS_DOWN:
+                    if key == ord('1'):
+                        waiting=False
+                        mode = "screwing"
+                        motor_path = os.path.join(file_directory,'urdf', 'DM_EMO_urdf') 
+                    elif key == ord('2'):
+                        waiting=False
+                        mode = "gripping"
+                        motor_path = os.path.join(file_directory,'urdf', 'DM_EMO_urdf_light') 
+        motor, constraint_ids, part_names = load_assembly(motor_path, spawn_point, spawn_orient, 0.001)
+        part_names = [name[:-4] for name in part_names]
+        dict_assembly = {motor_id:part for (motor_id, part) in zip(motor, part_names)} 
+        waiting = True
+        print("PRESS 1 TO START")
+        while waiting:
+            p.stepSimulation()
+            keys = p.getKeyboardEvents()
+            for key, state in keys.items():
+                if state == p.KEY_IS_DOWN:
+                    if key == ord('1'):
+                        waiting=False
+        ax = fig.add_subplot(111)
+        visualize_planning(seq_path, 0.1, fig, ax)
+        time.sleep(3)
+        visualize_planning(action_path, 1.0, fig, ax)
+        fig.clear()
+        ax = fig.add_subplot(111, projection='3d')
 
-    dist=0.3
-    angle=math.radians(35.0)
-    cam_poses=[]
-    cam_poses.append(spawn_point + np.array([math.sin(angle)*dist, 0.0, math.cos(angle)*dist]))
-    cam_poses.append(spawn_point + np.array([0.0, math.sin(angle)*dist, math.cos(angle)*dist]))
-    cam_poses.append(spawn_point + np.array([-math.sin(angle)*dist, 0.0, math.cos(angle)*dist]))
-    cam_poses.append(spawn_point + np.array([0.0, -math.sin(angle)*dist, math.cos(angle)*dist]))    
-    cam_poses.append(spawn_point + np.array([0.0, 0, dist]))
+        dist=0.3
+        angle=math.radians(35.0)
+        cam_poses=[]
+        cam_poses.append(spawn_point + np.array([math.sin(angle)*dist, 0.0, math.cos(angle)*dist]))
+        cam_poses.append(spawn_point + np.array([0.0, math.sin(angle)*dist, math.cos(angle)*dist]))
+        cam_poses.append(spawn_point + np.array([-math.sin(angle)*dist, 0.0, math.cos(angle)*dist]))
+        cam_poses.append(spawn_point + np.array([0.0, -math.sin(angle)*dist, math.cos(angle)*dist]))    
+        cam_poses.append(spawn_point + np.array([0.0, 0, dist]))
 
-    cam_oris=[]
-    cam_oris.append(p.getQuaternionFromEuler([0,np.pi+angle,0]))
-    cam_oris.append(p.getQuaternionFromEuler([angle,np.pi,0]))
-    cam_oris.append(p.getQuaternionFromEuler([0,np.pi-angle,0]))
-    cam_oris.append(p.getQuaternionFromEuler([-angle, np.pi,0]))
-    cam_oris.append(p.getQuaternionFromEuler([0, np.pi,0]))
+        cam_oris=[]
+        cam_oris.append(p.getQuaternionFromEuler([0,np.pi+angle,0]))
+        cam_oris.append(p.getQuaternionFromEuler([angle,np.pi,0]))
+        cam_oris.append(p.getQuaternionFromEuler([0,np.pi-angle,0]))
+        cam_oris.append(p.getQuaternionFromEuler([-angle, np.pi,0]))
+        cam_oris.append(p.getQuaternionFromEuler([0, np.pi,0]))
 
+        if mode == "screwing":
 
-    vis_time = 0.1
-    # Capture PTcloud with camera end effector
-    controler.switch_to_gripper()
-    points = controler.capture_body(cam_poses, cam_oris, camera, 1.0, dict_assembly, 0.1, fig, ax)
-    visualize_pt_cloud(points, dict_assembly, " ", vis_time, fig, ax, ['S1', 'S2', 'S3', 'S4'])
-    ###############################################EMO
-    controler.switch_to_screwdriver()
-    i=7
-    for i in range(3,i):
-        constraint_ids[i-1] = controler.unscrew(screwdriver, motor[i], constraint_ids[i-1], -0.002)
-        print(i)
-    #constraint_ids[i-1] = controler.unscrew(screwdriver, motor[i], constraint_ids[i-1], -0.002)
-    controler.switch_to_gripper()
-    points = controler.capture_body(cam_poses, cam_oris, camera, 1.0, dict_assembly, 0.1, fig, ax)
-    visualize_pt_cloud(points, dict_assembly, " ", vis_time, fig, ax, ['S1', 'S2', 'S3', 'S4'])
-    i=7
-    for i in range(3,i):
-        controler.grip(gripper, motor[i], [0.0, -0.3, 0.12], constraint_ids[i-1], [0,-0.00,-0.013],0.150)
-    #controler.grip(gripper, motor[i], [[0.10, 0.105, 0.8]], constraint_ids[i-1], [0,0.00,-0.01],0.125)
-    original_pos = {}
-    i=1
-    points = controler.capture_body(cam_poses, cam_oris, camera, 1.0, dict_assembly, 0.1, fig, ax)
-    visualize_pt_cloud(points, dict_assembly, " ", vis_time, fig, ax, ['L2'])   
-    original_pos[i], _ = controler.grip(gripper, motor[i], [-0.2, 0.075, 0.01], constraint_ids[i-1], [0, -0.056,-0.02], 0.06, False)
-    i=2
-    points = controler.capture_body(cam_poses, cam_oris, camera, 1.0, dict_assembly, 0.1, fig, ax)
-    visualize_pt_cloud(points, dict_assembly, " ", vis_time, fig, ax, ['Ro'])      
-    original_pos[i], _ = controler.grip(gripper, motor[i], [-0.2, 0.0, 0.101], constraint_ids[i-1], [0, -0.012,-0.025], 0.19, False)
-    i=7
-    points = controler.capture_body(cam_poses, cam_oris, camera, 1.0, dict_assembly, 0.1, fig, ax)
-    visualize_pt_cloud(points, dict_assembly, " ", vis_time, fig, ax, ['St'])  
-    original_pos[i], _ = controler.grip(gripper, motor[i] ,[-0.2, -0.150, 0.057], constraint_ids[i-1], [0, -0.042,-0.03], 0.1, False)
-
+            vis_time = 0.1
+            # Capture PTcloud with camera end effector
+            controler.switch_to_gripper()
+            #points = controler.capture_body(cam_poses, cam_oris, camera, 1.0, dict_assembly, 0.1, fig, ax)
+            #visualize_pt_cloud(points, dict_assembly, " ", vis_time, fig, ax, ['S1', 'S2', 'S3', 'S4'])
+            ###############################################EMO
+            #controler.switch_to_screwdriver()
+            i=7
+            for i in range(3,i):
+                controler.switch_to_screwdriver()
+                constraint_ids[i-1] = controler.unscrew(screwdriver, motor[i], constraint_ids[i-1], -0.002)
+                print(i)
+                controler.switch_to_gripper()
+                controler.grip(gripper, motor[i], [0.0, -0.3, 0.12], constraint_ids[i-1], [0,-0.00,-0.013],0.150)
+            #constraint_ids[i-1] = controler.unscrew(screwdriver, motor[i], constraint_ids[i-1], -0.002)
+            #controler.switch_to_gripper()
+            #points = controler.capture_body(cam_poses, cam_oris, camera, 1.0, dict_assembly, 0.1, fig, ax)
+            #visualize_pt_cloud(points, dict_assembly, " ", vis_time, fig, ax, ['S1', 'S2', 'S3', 'S4'])
+            #i=7
+            #for i in range(3,i):
+            #    controler.grip(gripper, motor[i], [0.0, -0.3, 0.12], constraint_ids[i-1], [0,-0.00,-0.013],0.150)
+            #controler.grip(gripper, motor[i], [[0.10, 0.105, 0.8]], constraint_ids[i-1], [0,0.00,-0.01],0.125)
+            original_pos = {}
+            i=1
+            points = controler.capture_body(cam_poses, cam_oris, camera, 1.0, dict_assembly, 0.1, fig, ax)
+            visualize_pt_cloud(points, dict_assembly, " ", vis_time, fig, ax, ['L2'])   
+            original_pos[i], _ = controler.grip(gripper, motor[i], [-0.2, 0.075, 0.01], constraint_ids[i-1], [0, -0.056,-0.02], 0.06, False)
+            i=2
+            points = controler.capture_body(cam_poses, cam_oris, camera, 1.0, dict_assembly, 0.1, fig, ax)
+            visualize_pt_cloud(points, dict_assembly, " ", vis_time, fig, ax, ['Ro'])      
+            original_pos[i], _ = controler.grip(gripper, motor[i], [-0.2, 0.0, 0.101], constraint_ids[i-1], [0, -0.012,-0.025], 0.19, False)
+            i=7
+            points = controler.capture_body(cam_poses, cam_oris, camera, 1.0, dict_assembly, 0.1, fig, ax)
+            visualize_pt_cloud(points, dict_assembly, " ", vis_time, fig, ax, ['St'])  
+            original_pos[i], _ = controler.grip(gripper, motor[i] ,[-0.2, -0.150, 0.057], constraint_ids[i-1], [0, -0.042,-0.03], 0.1, False)
+        elif mode == "gripping":
+            vis_time = 0.1
+            # Capture PTcloud with camera end effector
+            controler.switch_to_gripper()
+            #points = controler.capture_body(cam_poses, cam_oris, camera, 1.0, dict_assembly, 0.1, fig, ax)
+            #visualize_pt_cloud(points, dict_assembly, " ", vis_time, fig, ax, ['S1', 'S2', 'S3', 'S4'])
+            ###############################################EMO
+            original_pos = {}
+            i=1
+            points = controler.capture_body(cam_poses, cam_oris, camera, 1.0, dict_assembly, 0.1, fig, ax)
+            visualize_pt_cloud(points, dict_assembly, " ", vis_time, fig, ax, ['L2'])   
+            original_pos[i], _ = controler.grip(gripper, motor[i], [-0.2, 0.075, 0.01], constraint_ids[i-1], [0, -0.056,-0.02], 0.06, False)
+            i=2
+            points = controler.capture_body(cam_poses, cam_oris, camera, 1.0, dict_assembly, 0.1, fig, ax)
+            visualize_pt_cloud(points, dict_assembly, " ", vis_time, fig, ax, ['Ro'])      
+            original_pos[i], _ = controler.grip(gripper, motor[i], [-0.2, 0.0, 0.101], constraint_ids[i-1], [0, -0.012,-0.025], 0.19, False)
+            i=3
+            points = controler.capture_body(cam_poses, cam_oris, camera, 1.0, dict_assembly, 0.1, fig, ax)
+            visualize_pt_cloud(points, dict_assembly, " ", vis_time, fig, ax, ['St'])  
+            original_pos[i], _ = controler.grip(gripper, motor[i] ,[-0.2, -0.150, 0.057], constraint_ids[i-1], [0, -0.042,-0.03], 0.1, False)
+        fig.delaxes(ax)
+        for part_id in motor:
+            p.removeBody(part_id)
+        #original_pos[i], _ = controler.grip(gripper, motor[i] ,original_pos[i], constraint_ids[i-1], [0, -0.042,-0.03], 0.1, False)
+        
     #i=7
     #original_pos[i], _ = controler.grip(gripper, motor[i] ,original_pos[i], constraint_ids[i-1], [0, -0.042,-0.03], 0.1, False)
 

@@ -94,7 +94,7 @@
 <joint name="gripper_center" type="fixed">
     <parent link="base"/>
     <child link="gripper_center_link"/>
-    <origin rpy="0 0 0" xyz="0.0 0.0 0.16"/>
+    <origin rpy="0 0 0" xyz="-0.00 0.0 0.16"/>
 </joint>
 
 <link name="gripper_center_link">
