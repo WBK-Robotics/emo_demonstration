@@ -11,9 +11,11 @@ import numpy as np
 import pybullet as p
 import pybullet_industrial as pi
 import matplotlib.pyplot as plt
+
 from multiprocessing import Process
 
-from base_simulation import setup_base_sim
+
+from emo_demonstration.base_simulation import setup_base_sim
 
 
 # Global Parameters
@@ -58,8 +60,7 @@ def main():
     # Highlight specified part in PTcloud
     visualize_pt_cloud(points, dict_assembly, 'Highlighted Parts', hold_time_plot, ['S1', 'S2', 'S3', 'S4'])
     
-def capture_body(pose, orientation, camera, cutoff_depth, dict_assembly, hold_time_plot):
-    
+def capture_body(pose, orientation, camera, cutoff_depth, dict_assembly, hold_time_plot, fig=None, ax=None):
     for i in range(len(pose)):
         
         for _ in range(100):
@@ -80,75 +81,58 @@ def capture_body(pose, orientation, camera, cutoff_depth, dict_assembly, hold_ti
             points_combined= np.concatenate([points_combined, np.array(points)])
         
         title = 'Pose ' + str(i+1)
-        multi_p = Process(target=visualize_pt_cloud, args=(points_combined, dict_assembly, title, hold_time_plot,))
-        multi_p.start()
-        multi_p.join()
+        #multi_p = Process(target=visualize_pt_cloud, args=(points_combined, dict_assembly, title, hold_time_plot,))
+        #multi_p.start()
+        #multi_p.join()
+
+        if fig is not None and ax is not None:
+            visualize_pt_cloud(points_combined, dict_assembly, title, hold_time_plot, fig, ax)
         
     return points_combined
 
-def visualize_pt_cloud(points, dict_assembly, title, hold_time_plot, parts='NaN', markersize=2):
+def visualize_pt_cloud(points, dict_assembly, title, hold_time_plot, fig, ax, parts=None, markersize=1):
     
-    mngr = plt.get_current_fig_manager()
-    mngr.window.setGeometry(50,100,640, 545)
-
-    if parts == 'NaN':
-        
-        fig = plt.figure(figsize=(10, 10))
-        fig.suptitle(title)
-        
-        # Add 3d axes
-        ax = fig.add_subplot(111, projection='3d')
-        
-        # Scatter plot
-        ax.scatter(points[:, 0], points[:, 1], points[:, 2], s=markersize)
-        
-        # Setting the labels
-        ax.set_xlabel('X Label')
-        ax.set_ylabel('Y Label')
-        ax.set_zlabel('Z Label')
-        
-        # Show the plot
-        plt.show(block=False)
-        plt.pause(hold_time_plot)
-        
-    else:
-        
+    #mngr = plt.get_current_fig_manager()
+    #mngr.window.setGeometry(50,100,640, 545)
+    ax.clear()
+    if parts is None:
+        ax.scatter(points[:, 0], points[:, 1], points[:, 2], s=markersize, c = np.array([84.0/255,110.0/255,122.0/255,0.5]))     
+    else:      
         ids_unsorted = points[:,3]
-        ids = np.unique(ids_unsorted)
-        fig = plt.figure(figsize=(10, 10))
-        fig.suptitle(title)
-        ax = fig.add_subplot(111, projection='3d')
-        ax.view_init(elev=10, azim=60, roll=0)
-        
+        ids = np.unique(ids_unsorted)   
         part_ids = []
         for part_name in parts:
             for motor_id, part in dict_assembly.items():
                 if part == part_name:
                     part_ids.append(motor_id)
-                    
-        
         for element in ids:
-            
-            if element in part_ids:
+            #if element not in dict_assembly.keys():
+            #    masked_cloud = filter_array_by_column(points, element)
+            #    ax.scatter(masked_cloud[:,0],masked_cloud[:,1], masked_cloud[:,2], s=markersize, color = 'C7')
+            if element in dict_assembly.keys() and not element in part_ids:
                 masked_cloud = filter_array_by_column(points, element)
-                ax.scatter(masked_cloud[:,0],masked_cloud[:,1], masked_cloud[:,2], s=markersize, color = 'C2')
-                
-            elif element not in dict_assembly.keys():
+                ax.scatter(masked_cloud[:,0],masked_cloud[:,1], masked_cloud[:,2], s=markersize, 
+                           c = np.array([20.0/255,68.0/255,102.0/255,0.5]))
+            elif element in part_ids:
+                print(part_ids)
                 masked_cloud = filter_array_by_column(points, element)
-                ax.scatter(masked_cloud[:,0],masked_cloud[:,1], masked_cloud[:,2], s=markersize, color = 'C7')
-                        
-            elif element in dict_assembly.keys():
-                masked_cloud = filter_array_by_column(points, element)
-                ax.scatter(masked_cloud[:,0],masked_cloud[:,1], masked_cloud[:,2], s=markersize, color = 'C0')
+                ax.scatter(masked_cloud[:,0],masked_cloud[:,1], masked_cloud[:,2], s=markersize*4, 
+                           c = np.array([0,150.0/255.0,130.0/255.0,1.0]))
+      
+
                             
-        # Set labels and legend
-        ax.set_xlabel('X')
-        ax.set_ylabel('Y')
-        ax.set_zlabel('Z')
-        ax.legend()
-        
-        # Show the plot
-        plt.show()
+    # Set labels and legend
+    #ax.view_init(elev=10, azim=60, roll=0)
+    ax.set_xlabel('X')
+    ax.set_ylabel('Y')
+    ax.set_zlabel('Z')
+    ax.legend()
+    ax.set_xlim(-0.1, 0.1)
+    ax.set_ylim(-0.1, 0.1) 
+    ax.set_zlim(0, 0.2)     
+    # Show the plot
+    fig.canvas.draw()    # draw the canvas, cache the renderer
+    plt.pause(hold_time_plot)
         
     
 def load_assembly(folderPath, spawnPoint, spawnOrient=[0, 0, 0], scaleFactor=1.0):

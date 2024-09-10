@@ -35,7 +35,7 @@ def package_files(data_files, directory_list):
 
     return data_files
 
-data_files = package_files(data_files,[os.path.join('emo_demonstration','urdf')])
+data_files = package_files(data_files,[os.path.join('emo_demonstration','urdf'), os.path.join('emo_demonstration','Seq')])
 data_files.append((os.path.join('share', package_name), glob('launch/*launch.xml')))
 setup(
     name=package_name,
@@ -54,7 +54,8 @@ setup(
             'trajectory_publisher = emo_demonstration.ur5_trajectory_publisher:main',
             'board_calibration = emo_demonstration.board_calibration:main',
             'test_io_service_client = emo_demonstration.io_service_client:main',
-            'd_emo_nstration = emo_demonstration.d_emo_nstration:main'
+            'd_emo_nstration = emo_demonstration.d_emo_nstration:main',
+            'milling_d_emo = emo_demonstration.milling_d_emo:main'
         ],
     },
 )
