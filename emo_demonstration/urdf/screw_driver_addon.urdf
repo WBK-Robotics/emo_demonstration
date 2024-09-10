@@ -6,34 +6,51 @@
         <geometry>
 				<mesh filename="endeffector_mesh/Gesamtaufbau.stl" scale="0.001 0.001 0.001"/>
         </geometry>
-</visual>
+    </visual>
 </link>
 
 <joint name="base_joint" type="fixed">
     <parent link="base"/>
     <child link="screwdriver"/>
-    <origin rpy="0 0 0" xyz="0 0 0"/>
+    <origin rpy="0 0 0" xyz="-0.006 0.0 -0.006"/>
 </joint>
 
 <link name="screwdriver">
+    <contact>
+        <friction_anchor/>
+        <stiffness value="3.0"/>
+        <damping value="100000.00"/>
+        <spinning_friction value="1.0"/>
+        <lateral_friction value="1.0"/>
+        <contact_cfm value="10000.0" />
+        <contact_erp value="0.0" />
+    </contact>
     <visual>
         <geometry>
                 <mesh filename="endeffector_mesh/Schrauber.stl" scale="0.001 0.001 0.001"/>
         </geometry>
-</visual>
+    </visual>
 </link>
 <joint name="screwdriver_joint" type="fixed">
     <parent link="base"/>
     <child link="screw_tip"/>
-    <origin rpy="0 0 0" xyz="0.089 -0.104 0.032"/>
+    <origin rpy="0 0 0" xyz="0.083 -0.10 0.026"/>
 </joint>
 
 <link name="screw_tip">
-<visual>
-    <geometry>
-     <sphere radius="0.001"/>
-    </geometry>
-</visual>
+    <visual>
+        <geometry>
+            <sphere radius="0.002"/>
+        </geometry>
+        <material name="red">
+            <color rgba="1.0 0.0 0.0 1.0"/>
+        </material>
+    </visual>
+    <collision>
+        <geometry>
+            <sphere radius="0.002"/>
+        </geometry>
+    </collision>
 </link>
 
 

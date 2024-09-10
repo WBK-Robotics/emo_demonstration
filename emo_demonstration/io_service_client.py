@@ -20,15 +20,15 @@ class IOServiceClient(Node):
         self.future.add_done_callback(self.callback)
 
     def open_gripper(self):
-        self.set_digital_out(17,0.0)
-        sleep(0.025)
-        self.set_digital_out(16,1.0)
-
-
-    def close_gripper(self):
         self.set_digital_out(16,0.0)
         sleep(0.025)
         self.set_digital_out(17,1.0)
+
+
+    def close_gripper(self):
+        self.set_digital_out(17,0.0)
+        sleep(0.025)
+        self.set_digital_out(16,1.0)
 
 
 

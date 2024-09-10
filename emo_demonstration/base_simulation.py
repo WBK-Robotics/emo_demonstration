@@ -1,21 +1,24 @@
 import os
 import time
+import numpy as np
 import pybullet as p
 import pybullet_industrial as pi
-
+from emo_demonstration.depth_camera import RGBDCamera
 
 
 def setup_base_sim(mode = "gui"):
     file_directory = os.path.dirname(os.path.abspath(__file__))
-    sdmbot_urdf_file = os.path.join(file_directory, 'urdf', 'sdmbot.urdf')
-    main_endeffector_urdf_file = os.path.join(file_directory, 'urdf', 'endeffector.urdf')
+    sdmbot_urdf_file = os.path.join(file_directory, 'urdf', 'sdmbot copy.urdf')
+    main_endeffector_urdf_file = os.path.join(file_directory, 'urdf', 'endeffectorV2.urdf')
     screw_drifer_addon_urdf_file = os.path.join(file_directory, 'urdf', 'screw_driver_addon.urdf')
+    camera_addon_urdf_file = os.path.join(file_directory, 'urdf', 'depth_camera.urdf')
 
     if mode == "gui":
-        physics_client = p.connect(p.GUI, options='--background_color_red=1 ' +
-                                                '--background_color_green=1 ' +
-                                                '--background_color_blue=1')
+        physics_client = p.connect(p.GUI, options='--background_color_red=0.5 ' +
+                                                '--background_color_green=0.5 ' +
+                                                '--background_color_blue=0.5')
         p.configureDebugVisualizer(p.COV_ENABLE_GUI, 0)
+        p.resetDebugVisualizerCamera(cameraDistance=1.5, cameraYaw=-90, cameraPitch=-25, cameraTargetPosition=[0,0,0])
     elif mode == "direct":
         physics_client = p.connect(p.DIRECT)
     elif mode == "shared_memory":
@@ -26,6 +29,7 @@ def setup_base_sim(mode = "gui"):
     p.resetSimulation()
     p.setPhysicsEngineParameter(numSolverIterations=2000)
     p.setVRCameraState(rootPosition=(0,0,-0.50))
+    p.setGravity(0,0,-10)
 
 
     start_orientation = p.getQuaternionFromEuler([0, 0, 0])
@@ -33,31 +37,39 @@ def setup_base_sim(mode = "gui"):
   
 
     robot = pi.RobotBase(sdmbot_urdf_file, [0, 0, 0], start_orientation)
-    gripper = pi.Gripper(main_endeffector_urdf_file, [0, 0, 0], start_orientation)
+    gripper = pi.Gripper(main_endeffector_urdf_file, [0, 0, 0], start_orientation, tcp_frame="gripper_center_link")
     gripper.couple(robot,endeffector_name='tool0')
 
-    screwdriver = pi.SuctionGripper(screw_drifer_addon_urdf_file, [0, 0, 0], start_orientation)
+    screwdriver = pi.SuctionGripper(screw_drifer_addon_urdf_file, [0, 0, 0], start_orientation, tcp_frame="screw_tip")
     screwdriver.couple(robot,endeffector_name='tool0')
 
-
-    joint_state = {'shoulder_lift_joint': -1.3061111730388184,
-                   'elbow_joint': -0.43253040313720703,
-                   'wrist_1_joint': 3.6545120912739257,
-                   'wrist_2_joint': -1.5724981466876429,
-                   'wrist_3_joint': -1.0698006788836878,
-                   'shoulder_pan_joint': 1.3991775512695312}
-
-    robot.set_joint_position(joint_state)
+    camera_parameters = {'width': int(1920/8), 'height': int(1080/8), 'fov': 40,
+                         'aspect ratio': 16/9, 'near plane distance': 0.01, 'far plane distance': 100}
+    camera = RGBDCamera(camera_addon_urdf_file, [0, 0, 0], start_orientation,
+                        camera_parameters=camera_parameters, camera_frame="camera")
+    camera.couple(robot,endeffector_name='tool0')
 
 
-    return robot, gripper, screwdriver
+    joint_state = {'shoulder_lift_joint': -np.pi/2,
+                   'elbow_joint': -np.pi/2,
+                   'wrist_1_joint': -np.pi,
+                   'wrist_2_joint': 0,
+                   'wrist_3_joint': 0,
+                   'shoulder_pan_joint': np.pi/2}
+    for _ in range(200):
+        robot.set_joint_position(joint_state)
+        p.stepSimulation()
+
+    return robot, gripper, screwdriver, camera
 
 if __name__ == "__main__":
     import numpy as np
 
-    robot, gripper, screwdriver = setup_base_sim()
+    robot, gripper, screwdriver, camera = setup_base_sim()
     for _ in range(100):
         p.stepSimulation()
+
+
 
     position = np.array([0, 0, 0.63])
     while True:

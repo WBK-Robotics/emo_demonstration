@@ -46,15 +46,15 @@
         <contact_erp value="0.5" />
     </contact>
     <visual>
-        <origin rpy="0 0 0" xyz="0 0 0.00"/>
+        <origin rpy="1.570796327 0 1.570796327" xyz="0 0.003 0.080"/>
         <geometry>
-            <mesh filename="endeffector_mesh/Backe1.stl" scale="0.001 0.001 0.001"/>
+            <mesh filename="endeffector_mesh/Backe1_V2.stl" scale="0.001 0.001 0.001"/>
         </geometry>
     </visual>
     <collision>
-        <origin rpy="0 0 0" xyz="0 0 0.00"/>
+        <origin rpy="1.570796327 0 1.570796327" xyz="0 0.003 0.080"/>
         <geometry>
-            <mesh filename="endeffector_mesh/Backe1.stl" scale="0.001 0.001 0.001"/>
+            <mesh filename="endeffector_mesh/Backe1_V2.stl" scale="0.001 0.001 0.001"/>
         </geometry>
     </collision>
 </link>
@@ -78,15 +78,15 @@
         <contact_erp value="0.5" />
     </contact>
     <visual>
-        <origin rpy="0 0 0" xyz="0 0 0.00"/>
+        <origin rpy="1.570796327 0 1.570796327" xyz="0 0.003 0.080"/>
         <geometry>
-            <mesh filename="endeffector_mesh/Backe2.stl" scale="0.001 0.001 0.001"/>
+            <mesh filename="endeffector_mesh/Backe2_V2.stl" scale="0.001 0.001 0.001"/>
         </geometry>
     </visual>
     <collision>
-        <origin rpy="0 0 0" xyz="0 0 0.00"/> 
+        <origin rpy="1.570796327 0 1.570796327" xyz="0 0.003 0.080"/> 
         <geometry>
-            <mesh filename="endeffector_mesh/Backe2.stl" scale="0.001 0.001 0.001"/>
+            <mesh filename="endeffector_mesh/Backe2_V2.stl" scale="0.001 0.001 0.001"/>
         </geometry>
     </collision>
 </link>
@@ -94,7 +94,7 @@
 <joint name="gripper_center" type="fixed">
     <parent link="base"/>
     <child link="gripper_center_link"/>
-    <origin rpy="0 0 0" xyz="0.0 0.0 0.185"/>
+    <origin rpy="0 0 0" xyz="0.0 0.0 0.16"/>
 </joint>
 
 <link name="gripper_center_link">

@@ -1,0 +1,38 @@
+<robot name="L1">
+	<link name="baselink" />
+	<joint name="dummy" type="fixed">
+		<parent link="baselink" />
+		<child link="geometry" />
+	</joint>
+	<link name="geometry">
+		<contact>
+			<lateral_friction value="1.0" />
+			<spinning_friction value="0.2" />
+			<rolling_friction value="0.001" />
+			<contact_cfm value="0.0" />
+			<contact_erp value="0.8" />
+			<damping value="1000" />
+			<stiffness value="30000" />
+		</contact>
+		<inertial>
+			<origin rpy="0 0 0" xyz="0.0006518549099502081 0.0009457451903836788 2.9160341038592383" />
+			<mass value="1.0" />
+			<inertia ixx="1" ixy="0" ixz="0" iyy="1" iyz="0" izz="1" />
+		</inertial>
+		<visual>
+			<origin rpy="0 0 0" xyz="0 0 0" />
+			<geometry>
+				<mesh filename="mesh/L1.stl" />
+			</geometry>
+			<material name="base">
+				<color rgba="0.7 0.7 0.7 1" />
+			</material>
+		</visual>
+		<collision>
+			<origin rpy="0 0 0" xyz="0 0 0" />
+			<geometry>
+				<mesh filename="mesh/L1.stl" />
+			</geometry>
+		</collision>
+	</link>
+</robot>

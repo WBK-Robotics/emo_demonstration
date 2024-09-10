@@ -64,7 +64,7 @@ def main():
     import rclpy
     from emo_demonstration.base_simulation import setup_base_sim
     rclpy.init()
-    robot, endeffector = setup_base_sim(mode="direct")
+    robot, endeffector,_ = setup_base_sim(mode="direct")
     publisher_node = URTrajectoryPublisher(robot)
 
     points = load_points_from_csv('test.csv')

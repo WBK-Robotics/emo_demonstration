@@ -54,6 +54,7 @@ setup(
             'trajectory_publisher = emo_demonstration.ur5_trajectory_publisher:main',
             'board_calibration = emo_demonstration.board_calibration:main',
             'test_io_service_client = emo_demonstration.io_service_client:main',
+            'd_emo_nstration = emo_demonstration.d_emo_nstration:main'
         ],
     },
 )
